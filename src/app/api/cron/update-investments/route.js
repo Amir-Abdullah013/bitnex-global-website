@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 // GET /api/cron/update-investments - Cron job to update investment statuses
 export async function GET(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     // Verify this is a legitimate cron request (you might want to add authentication)
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET || 'your-cron-secret';
@@ -101,6 +102,9 @@ export async function GET(request) {
       { status: 500 }
     );
   } finally {
-    await prisma.$disconnect();
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }

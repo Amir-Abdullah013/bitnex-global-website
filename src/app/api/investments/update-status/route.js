@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 // POST /api/investments/update-status - Update investment statuses
 export async function POST(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const now = new Date();
     
     // Find investments that should be completed
@@ -94,6 +95,9 @@ export async function POST(request) {
       { status: 500 }
     );
   } finally {
-    await prisma.$disconnect();
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }

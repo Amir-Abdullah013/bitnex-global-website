@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { orderMatchingEngine } from '../../../lib/order-matching-engine';
 import { authHelpers } from '@/lib/supabase';
 
@@ -11,13 +10,15 @@ export const setWebSocketServer = (server) => {
   wsServer = server;
 };
 
-const prisma = new PrismaClient();
-
 /**
  * GET /api/orders - List orders for the authenticated user
  */
 export async function GET(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     // Get current user
     const currentUser = await authHelpers.getCurrentUser();
     if (!currentUser) {
@@ -109,6 +110,11 @@ export async function GET(request) {
       { error: 'Failed to fetch orders', details: error.message },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 
@@ -116,7 +122,11 @@ export async function GET(request) {
  * POST /api/orders - Create a new order
  */
 export async function POST(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     // Get current user
     const currentUser = await authHelpers.getCurrentUser();
     if (!currentUser) {
@@ -254,6 +264,11 @@ export async function POST(request) {
       },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 
@@ -261,7 +276,11 @@ export async function POST(request) {
  * GET /api/orders/orderbook - Get order book data
  */
 export async function GET_ORDERBOOK(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit')) || 20;
 
@@ -278,6 +297,11 @@ export async function GET_ORDERBOOK(request) {
       { error: 'Failed to fetch order book', details: error.message },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 
@@ -285,7 +309,11 @@ export async function GET_ORDERBOOK(request) {
  * GET /api/orders/trades - Get recent trades
  */
 export async function GET_TRADES(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit')) || 50;
 
@@ -310,5 +338,10 @@ export async function GET_TRADES(request) {
       { error: 'Failed to fetch trades', details: error.message },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }

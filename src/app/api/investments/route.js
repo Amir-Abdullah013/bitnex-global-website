@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 // GET /api/investments - Get user's investments
 export async function GET(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -158,5 +159,10 @@ export async function POST(request) {
       { success: false, error: 'Failed to create investment' },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }

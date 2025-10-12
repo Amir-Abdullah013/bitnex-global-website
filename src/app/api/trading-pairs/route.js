@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 /**
  * GET /api/trading-pairs - Get all active trading pairs
  */
 export async function GET() {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const tradingPairs = await prisma.tradingPair.findMany({
       where: {
         isActive: true
@@ -195,6 +196,11 @@ export async function PUT(request) {
       success: false,
       error: 'Failed to update trading pair'
     }, { status: 500 });
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 

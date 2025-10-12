@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 // GET /api/investment-plans - Get all active investment plans
 export async function GET() {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const plans = await prisma.investmentPlan.findMany({
       where: {
         isActive: true
@@ -79,5 +80,10 @@ export async function POST(request) {
       { success: false, error: 'Failed to create investment plan' },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
