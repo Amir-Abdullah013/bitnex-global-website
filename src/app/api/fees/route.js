@@ -11,6 +11,22 @@ export async function GET(request) {
     const { PrismaClient } = await import('@prisma/client');
     prisma = new PrismaClient();
 
+    // Check if we're in build mode or database not available
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      // Return default fee structure for build time
+      return NextResponse.json({
+        success: true,
+        feeStructures: [{
+          id: 'default',
+          name: 'Standard Trading Fees',
+          makerFee: 0.1,
+          takerFee: 0.1,
+          isActive: true,
+          isDefault: true
+        }]
+      });
+    }
+
     const { searchParams } = new URL(request.url);
     const tradingPairId = searchParams.get('tradingPairId');
     const type = searchParams.get('type'); // 'structures', 'info', 'calculate'

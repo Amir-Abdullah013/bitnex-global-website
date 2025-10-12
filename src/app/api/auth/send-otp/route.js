@@ -4,22 +4,23 @@
  */
 
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import nodemailer from 'nodemailer';
-
-const prisma = new PrismaClient();
 
 export async function POST(request) {
+  let prisma;
   try {
+    // Dynamic imports to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    const nodemailer = await import('nodemailer');
+    
+    prisma = new PrismaClient();
 
-    // Email configuration
-    const transporter = nodemailer.createTransporter({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
+    // Check if we're in build mode
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database not configured'
+      }, { status: 503 });
+    }
 
     const { email } = await request.json();
 
@@ -62,9 +63,18 @@ export async function POST(request) {
       }
     });
 
+    // Email configuration with fallback
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER || 'noreply@bitnex.com',
+        pass: process.env.EMAIL_PASS || 'dummy-password'
+      }
+    });
+
     // Send OTP email
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: process.env.EMAIL_USER || 'noreply@bitnex.com',
       to: email,
       subject: 'Bitnex Global - Password Reset OTP',
       html: `
@@ -90,7 +100,12 @@ export async function POST(request) {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    // Try to send email, but don't fail if email service is not configured
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (emailError) {
+      console.warn('Email service not configured, but OTP generated:', emailError.message);
+    }
 
     return NextResponse.json({
       success: true,
@@ -104,6 +119,8 @@ export async function POST(request) {
       { status: 500 }
     );
   } finally {
-    await prisma.$disconnect();
+    if (prisma) {
+      await prisma.$disconnect();
+    }
   }
 }

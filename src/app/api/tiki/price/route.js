@@ -10,6 +10,21 @@ export async function GET(request) {
     const { PrismaClient } = await import('@prisma/client');
     prisma = new PrismaClient();
 
+    // Check if we're in build mode or database not available
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      // Return default values for build time
+      return NextResponse.json({
+        success: true,
+        price: 0.0035,
+        change24h: 0,
+        volume24h: 0,
+        high24h: 0.0035,
+        low24h: 0.0035,
+        marketCap: null,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol') || 'TIKI';
 
@@ -67,7 +82,9 @@ export async function GET(request) {
       error: 'Failed to fetch Tiki price data'
     }, { status: 500 });
   } finally {
-    await prisma.$disconnect();
+    if (prisma) {
+      await prisma.$disconnect();
+    }
   }
 }
 

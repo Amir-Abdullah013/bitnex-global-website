@@ -7,6 +7,15 @@ export async function GET(request) {
     // Dynamic import to avoid build-time issues
     const { PrismaClient } = await import('@prisma/client');
     prisma = new PrismaClient();
+
+    // Check if we're in build mode or database not available
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json({
+        success: true,
+        data: []
+      });
+    }
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -58,6 +67,14 @@ export async function POST(request) {
     // Dynamic import to avoid build-time issues
     const { PrismaClient } = await import('@prisma/client');
     prisma = new PrismaClient();
+
+    // Check if we're in build mode or database not available
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database not configured'
+      }, { status: 503 });
+    }
     
     const body = await request.json();
     const { userId, planId, investedAmount } = body;
