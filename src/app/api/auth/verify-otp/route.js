@@ -4,12 +4,22 @@
  */
 
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 export async function POST(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+
+    // Check if we're in build mode or database not available
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json({
+        success: false,
+        error: 'Database not configured'
+      }, { status: 503 });
+    }
+
     const { email, otp } = await request.json();
 
     if (!email || !otp) {
@@ -107,6 +117,8 @@ export async function POST(request) {
       { status: 500 }
     );
   } finally {
-    await prisma.$disconnect();
+    if (prisma) {
+      await prisma.$disconnect();
+    }
   }
 }
