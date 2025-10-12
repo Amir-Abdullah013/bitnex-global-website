@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 /**
  * GET /api/tiki/price - Get current Tiki price data
  */
 export async function GET(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol') || 'TIKI';
 

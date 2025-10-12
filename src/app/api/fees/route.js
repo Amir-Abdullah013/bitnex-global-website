@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { feeCalculator } from '../../../lib/fee-calculator';
-
-const prisma = new PrismaClient();
 
 /**
  * GET /api/fees - Get all fee structures or specific fee info
  */
 export async function GET(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+
     const { searchParams } = new URL(request.url);
     const tradingPairId = searchParams.get('tradingPairId');
     const type = searchParams.get('type'); // 'structures', 'info', 'calculate'
@@ -133,6 +135,11 @@ export async function GET(request) {
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
+  } finally {
+    // Clean up database connection
+    if (prisma) {
+      await prisma.$disconnect();
+    }
   }
 }
 

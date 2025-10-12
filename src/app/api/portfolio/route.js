@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getServerSession, getUserRole } from '../../../lib/session';
-import { PrismaClient } from '@prisma/client';
 import { handleApiError, handleAuthError } from '../error-handler';
-
-const prisma = new PrismaClient();
 
 /**
  * GET /api/portfolio - Get user's portfolio data
  */
 export async function GET(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+
     console.log('🔍 Portfolio API called');
     
     const session = await getServerSession();
@@ -100,6 +102,11 @@ export async function GET(request) {
     console.error('❌ Error in portfolio API:', error);
     console.error('Error stack:', error.stack);
     return handleApiError(error, 'Portfolio API');
+  } finally {
+    // Clean up database connection
+    if (prisma) {
+      await prisma.$disconnect();
+    }
   }
 }
 

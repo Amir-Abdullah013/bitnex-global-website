@@ -4,22 +4,27 @@
  */
 
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import nodemailer from 'nodemailer';
-
-const prisma = new PrismaClient();
-
-// Email configuration
-const transporter = nodemailer.createTransporter({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
 export async function POST(request) {
+  let prisma;
+  let transporter;
+  
   try {
+    // Dynamic imports to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    const nodemailer = await import('nodemailer');
+    
+    prisma = new PrismaClient();
+
+    // Email configuration
+    transporter = nodemailer.default.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
     const { email } = await request.json();
 
     if (!email) {
@@ -102,5 +107,10 @@ export async function POST(request) {
       { success: false, error: 'Failed to send OTP' },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }

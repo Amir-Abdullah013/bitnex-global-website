@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 /**
  * GET /api/price - Get current price data
  */
 export async function GET(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol') || 'BNX';
 
@@ -64,6 +66,11 @@ export async function GET(request) {
       success: false,
       error: 'Failed to fetch price data'
     }, { status: 500 });
+  } finally {
+    // Clean up database connection
+    if (prisma) {
+      await prisma.$disconnect();
+    }
   }
 }
 
