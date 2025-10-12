@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import chartDataService from '../../../lib/chart-data-service';
 
 /**
  * GET /api/chart-data
@@ -13,7 +12,12 @@ import chartDataService from '../../../lib/chart-data-service';
  * - stats: Include market statistics (true/false)
  */
 export async function GET(request) {
+  let chartDataService;
   try {
+    // Dynamic import to avoid build-time issues
+    const chartDataServiceModule = await import('../../../lib/chart-data-service');
+    chartDataService = chartDataServiceModule.default;
+    
     const { searchParams } = new URL(request.url);
     
     // Extract query parameters
@@ -113,6 +117,7 @@ export async function GET(request) {
  * - data: Array of OHLCV data points
  */
 export async function POST(request) {
+  let prisma;
   try {
     const body = await request.json();
     const { symbol, timeframe, data } = body;
@@ -136,7 +141,7 @@ export async function POST(request) {
     
     // Store data in database
     const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
+    prisma = new PrismaClient();
     
     try {
       // Convert data to database format
@@ -164,7 +169,9 @@ export async function POST(request) {
       });
       
     } finally {
-      await prisma.$disconnect();
+      if (prisma) {
+        await prisma.$disconnect();
+      }
     }
     
   } catch (error) {
@@ -183,7 +190,12 @@ export async function POST(request) {
  * Clear cached data for a symbol/timeframe
  */
 export async function DELETE(request) {
+  let chartDataService;
   try {
+    // Dynamic import to avoid build-time issues
+    const chartDataServiceModule = await import('../../../lib/chart-data-service');
+    chartDataService = chartDataServiceModule.default;
+    
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol');
     const timeframe = searchParams.get('timeframe');

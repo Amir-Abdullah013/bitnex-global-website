@@ -1,6 +1,16 @@
-import { PrismaClient } from '@prisma/client';
+// Dynamic Prisma import to avoid build-time issues
+let prisma;
 
-const prisma = new PrismaClient();
+/**
+ * Get Prisma client dynamically
+ */
+async function getPrisma() {
+  if (!prisma) {
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 /**
  * Chart Data Service
@@ -149,7 +159,8 @@ class ChartDataService {
       const startTime = new Date(endTime.getTime() - (limit * intervalMs));
 
       // Try to fetch from MarketData table
-      const marketData = await prisma.marketData.findMany({
+      const prismaClient = await getPrisma();
+      const marketData = await prismaClient.marketData.findMany({
         where: {
           symbol: symbol,
           timestamp: {
@@ -197,7 +208,8 @@ class ChartDataService {
    */
   async getLatestPrice(symbol) {
     try {
-      const latest = await prisma.price.findFirst({
+      const prismaClient = await getPrisma();
+      const latest = await prismaClient.price.findFirst({
         where: { symbol },
         orderBy: { timestamp: 'desc' }
       });
@@ -419,7 +431,8 @@ class ChartDataService {
    */
   async getMarketStats(symbol) {
     try {
-      const stats = await prisma.marketData.aggregate({
+      const prismaClient = await getPrisma();
+      const stats = await prismaClient.marketData.aggregate({
         where: { symbol },
         _max: { high: true, timestamp: true },
         _min: { low: true },
