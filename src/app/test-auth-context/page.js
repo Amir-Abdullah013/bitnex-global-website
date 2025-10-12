@@ -1,9 +1,9 @@
 'use client';
 
 import { useAuth } from '../../lib/auth-context';
-import { useAuthContext } from '../../components/AuthProvider';
+import AuthProvider, { useAuthContext } from '../../components/AuthProvider';
 
-export default function TestAuthContext() {
+function TestAuthContextContent() {
   const authFromContext = useAuth();
   const authFromProvider = useAuthContext();
 
@@ -102,5 +102,13 @@ export default function TestAuthContext() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TestAuthContext() {
+  return (
+    <AuthProvider>
+      <TestAuthContextContent />
+    </AuthProvider>
   );
 }

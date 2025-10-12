@@ -3,99 +3,52 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth-context';
-import { useTiki } from '../../../lib/tiki-context';
-import { usePriceUpdates } from '../../../hooks/usePriceUpdates';
+import { useUniversal } from '../../../lib/universal-context';
+import { useInvestments } from '../../../hooks/useInvestments';
 import Layout from '../../../components/Layout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
 import WalletOverview from '../../../components/WalletOverview';
 import PriceChart from '../../../components/PriceChart';
+import LoadingSkeleton from '../../../components/LoadingSkeleton';
+import ErrorBoundary from '../../../components/ErrorBoundary';
+import SafeLoader from '../../../components/SafeLoader';
+import { useLoadingManager } from '../../../hooks/useLoadingManager';
 import { ToastContainer, useToast } from '../../../components/Toast';
 
-export default function UserDashboard() {
+function UserDashboardContent() {
   const { user, loading, isAuthenticated } = useAuth();
-  const { usdBalance, tikiBalance, tikiPrice, formatCurrency, formatTiki, buyTiki, sellTiki } = useTiki();
+  const { 
+    usdBalance, 
+    bnxBalance, 
+    bnxPrice, 
+    formatCurrency, 
+    formatBnx, 
+    buyBnx, 
+    sellBnx,
+    isLoading: dashboardLoading
+  } = useUniversal();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isOAuthCallback, setIsOAuthCallback] = useState(false);
   const [showStakeConfirm, setShowStakeConfirm] = useState(false);
   const [pendingStake, setPendingStake] = useState(null);
-  const { success, error, toasts, removeToast } = useToast();
+  const { investments: userInvestments, loading: loadingInvestments, error: investmentsError } = useInvestments();
   
-  // Enable real-time price updates every 5 seconds
-  usePriceUpdates(5000);
+  // Safe loading management
+  const { isLoading: safeLoading, forceStop } = useLoadingManager(loading || dashboardLoading, 5000);
+  const { success, error, toasts, removeToast } = useToast();
 
-  // Fetch dashboard stats when component mounts
-  useEffect(() => {
-    if (user?.id) {
-      fetchDashboardStats();
-      fetchQuickStats();
-    }
-  }, [user?.id]);
-
-  // Tiki trading state - only for Tiki tokens
+  // BNX trading state - only for BNX tokens
   const [tradeType, setTradeType] = useState('buy');
   const [tradeAmount, setTradeAmount] = useState('');
   const [isTrading, setIsTrading] = useState(false);
 
-  // Dashboard stats state
-  const [dashboardStats, setDashboardStats] = useState({
-    totalDeposits: 0,
-    totalWithdrawals: 0,
-    transactionCount: 0
-  });
+  // Calculate total value using BNX price
+  const totalValue = parseFloat(tradeAmount) * bnxPrice || 0;
 
-  // Quick stats state
-  const [quickStats, setQuickStats] = useState({
-    totalTrades: 0,
-    totalProfit: 0,
-    activeOrders: 0,
-    successRate: 0
-  });
 
-  // Calculate total value using Tiki price
-  const totalValue = parseFloat(tradeAmount) * tikiPrice || 0;
-
-  // Fetch dashboard stats
-  const fetchDashboardStats = async () => {
-    if (!user?.id) return;
-    
-    try {
-      const response = await fetch(`/api/wallet/overview?userId=${user.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setDashboardStats({
-          totalDeposits: data.statistics?.totalDeposits || 0,
-          totalWithdrawals: data.statistics?.totalWithdrawals || 0,
-          transactionCount: data.statistics?.transactionCount || 0
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-    }
-  };
-
-  // Fetch quick stats
-  const fetchQuickStats = async () => {
-    if (!user?.id) return;
-    
-    try {
-      const response = await fetch(`/api/user/quick-stats?userId=${user.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setQuickStats({
-          totalTrades: data.totalTrades || 0,
-          totalProfit: data.totalProfit || 0,
-          activeOrders: data.activeOrders || 0,
-          successRate: data.successRate || 0
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching quick stats:', error);
-    }
-  };
-
-  // Handle Tiki trade execution with API-based price calculation
+  // Handle BNX trade execution with API-based price calculation
   const handleTrade = async () => {
     if (!tradeAmount || parseFloat(tradeAmount) <= 0) return;
 
@@ -104,7 +57,7 @@ export default function UserDashboard() {
       const amountValue = parseFloat(tradeAmount);
       
       if (tradeType === 'buy') {
-        // BUYING TIKI TOKENS LOGIC
+        // BUYING BNX TOKENS LOGIC
         // Check if user has sufficient USD balance
         if (amountValue > usdBalance) {
           alert(`Insufficient USD balance. Available: ${formatCurrency(usdBalance, 'USD')}`);
@@ -112,35 +65,29 @@ export default function UserDashboard() {
         }
         
         // Use the new API-based buy function
-        const result = await buyTiki(amountValue);
+        const result = await buyBnx(amountValue);
         
         if (result.success) {
-          alert(`Successfully bought ${formatTiki(result.tokensBought)} Tiki tokens for ${formatCurrency(amountValue, 'USD')}!`);
-          if (result.newPrice !== result.oldPrice) {
-            alert(`Price updated from ${formatCurrency(result.oldPrice)} to ${formatCurrency(result.newPrice)} per token!`);
-          }
+          success(`Successfully bought ${formatBnx(result.tokensBought)} BNX tokens!`);
         } else {
-          alert(`Buy failed: ${result.error}`);
+          error(`Buy failed: ${result.error}`);
         }
         
       } else {
-        // SELLING TIKI TOKENS LOGIC
-        // Check if user has sufficient Tiki balance
-        if (amountValue > tikiBalance) {
-          alert(`Insufficient Tiki balance. Available: ${formatTiki(tikiBalance)} TIKI`);
+        // SELLING BNX TOKENS LOGIC
+        // Check if user has sufficient BNX balance
+        if (amountValue > bnxBalance) {
+          alert(`Insufficient BNX balance. Available: ${formatBnx(bnxBalance)} BNX`);
           return;
         }
         
         // Use the new API-based sell function
-        const result = await sellTiki(amountValue);
+        const result = await sellBnx(amountValue);
         
         if (result.success) {
-          alert(`Successfully sold ${formatTiki(amountValue)} Tiki tokens for ${formatCurrency(result.usdReceived, 'USD')}!`);
-          if (result.newPrice !== result.oldPrice) {
-            alert(`Price updated from ${formatCurrency(result.oldPrice)} to ${formatCurrency(result.newPrice)} per token!`);
-          }
+          success(`Successfully sold ${formatBnx(amountValue)} BNX tokens for ${formatCurrency(result.usdReceived, 'USD')}!`);
         } else {
-          alert(`Sell failed: ${result.error}`);
+          error(`Sell failed: ${result.error}`);
         }
       }
       
@@ -157,8 +104,8 @@ export default function UserDashboard() {
   // Handle quick stake functionality
   const handleQuickStake = async (amount, durationDays) => {
     // Validate balance
-    if (tikiBalance < amount) {
-      error(`Insufficient TIKI balance. Available: ${formatTiki(tikiBalance)}`);
+    if (bnxBalance < amount) {
+      error(`Insufficient BNX balance. Available: ${formatBnx(bnxBalance)}`);
       return;
     }
 
@@ -200,7 +147,7 @@ export default function UserDashboard() {
       const data = await response.json();
 
       if (response.ok) {
-        success(`🎉 Staking started successfully! You staked ${formatTiki(amount)} TIKI for ${durationDays} days. Earn ${formatTiki(pendingStake.rewardAmount)} TIKI reward!`);
+        success(`🎉 Staking started successfully! You staked ${formatBnx(amount)} BNX for ${durationDays} days. Earn ${formatBnx(pendingStake.rewardAmount)} BNX reward!`);
         // Refresh dashboard stats
         fetchDashboardStats();
       } else {
@@ -222,23 +169,19 @@ export default function UserDashboard() {
     setPendingStake(null);
   };
 
-  // Update Tiki price using global state
-  useEffect(() => {
-    const updateTikiPrice = () => {
-      // Use real Tiki price from global state
-      // Price updates are handled by the global state when trades occur
-      // This effect just ensures the UI reflects the current price
-    };
 
-    updateTikiPrice();
-    const interval = setInterval(updateTikiPrice, 5000);
-    return () => clearInterval(interval);
-  }, [tikiPrice]);
+  // Price updates are handled by the context when trades occur
 
   // ✅ Prevent hydration mismatches by only running client-side code after mount
   useEffect(() => {
     setMounted(true);
     console.log('Dashboard: Component mounted');
+    
+    // CRITICAL: Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.warn('Dashboard: Loading timeout reached - forcing render');
+      setLoadingTimeout(true);
+    }, 5000); // 5 second timeout
     
     // Use requestAnimationFrame to ensure DOM is ready
     const initializeDashboard = () => {
@@ -305,6 +248,7 @@ export default function UserDashboard() {
     requestAnimationFrame(initializeDashboard);
   }, []);
 
+
   // ✅ Redirect to signin if not authenticated (only after component mounts)
   useEffect(() => {
     if (mounted && !loading && !isAuthenticated && !user) {
@@ -316,19 +260,42 @@ export default function UserDashboard() {
     }
   }, [mounted, loading, isAuthenticated, user, router]);
 
-  // ✅ Show loading state while checking authentication
-  if (!mounted || loading) {
+  // CRITICAL: Add timeout cleanup
+  useEffect(() => {
+    return () => {
+      // Cleanup timeout on unmount
+      const timeoutId = setTimeout(() => {}, 0);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  // ✅ SIMPLIFIED LOADING LOGIC - No more infinite loading!
+  if (!mounted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
+      <Layout showSidebar={true}>
+        <SafeLoader isLoading={true} text="Loading dashboard..." timeout={3000}>
+          <div>Dashboard content will load here...</div>
+        </SafeLoader>
+      </Layout>
     );
   }
 
-  // ✅ Show loading state if not authenticated (NO REDIRECT)
+  // Show loading with timeout protection
+  if (safeLoading) {
+    return (
+      <Layout showSidebar={true}>
+        <SafeLoader 
+          isLoading={true} 
+          text={loading ? "Authenticating..." : "Loading dashboard data..."} 
+          timeout={5000}
+        >
+          <div>Dashboard content will load here...</div>
+        </SafeLoader>
+      </Layout>
+    );
+  }
+
+  // Redirect if not authenticated
   if (!isAuthenticated && !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -427,7 +394,7 @@ export default function UserDashboard() {
                     </svg>
                   </div>
                   <p className="text-xs font-medium text-gray-600 mb-1">Total Coins</p>
-                  <p className="text-sm font-bold text-gray-900">{formatTiki(tikiBalance)} TIKI</p>
+                  <p className="text-sm font-bold text-gray-900">{formatBnx(bnxBalance)} BNX</p>
                 </div>
 
                 {/* Mobile Quick Stake Widget */}
@@ -440,21 +407,21 @@ export default function UserDashboard() {
                     <button
                       onClick={() => handleQuickStake(100, 7)}
                       className="p-1 text-xs bg-blue-50 hover:bg-blue-100 rounded text-blue-700 font-medium"
-                      disabled={tikiBalance < 100}
+                      disabled={bnxBalance < 100}
                     >
                       7d (2%)
                     </button>
                     <button
                       onClick={() => handleQuickStake(500, 30)}
                       className="p-1 text-xs bg-green-50 hover:bg-green-100 rounded text-green-700 font-medium"
-                      disabled={tikiBalance < 500}
+                      disabled={bnxBalance < 500}
                     >
                       30d (10%)
                     </button>
                     <button
                       onClick={() => handleQuickStake(1000, 90)}
                       className="p-1 text-xs bg-purple-50 hover:bg-purple-100 rounded text-purple-700 font-medium"
-                      disabled={tikiBalance < 1000}
+                      disabled={bnxBalance < 1000}
                     >
                       90d (25%)
                     </button>
@@ -467,7 +434,7 @@ export default function UserDashboard() {
           {/* Mobile Quick Trade */}
           <div className="bg-white border-b flex-1">
             <div className="px-4 py-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Tiki Quick Trade</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">BNX Quick Trade</h3>
               <div className="space-y-4">
                 {/* Buy/Sell Toggle */}
                 <div className="flex bg-gray-100 rounded-lg p-1">
@@ -493,16 +460,16 @@ export default function UserDashboard() {
                   </button>
                 </div>
 
-                {/* Tiki Token Display */}
+                {/* BNX Token Display */}
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600 mb-2">TIKI</div>
-                  <div className="text-sm text-gray-600">Tiki Token</div>
+                  <div className="text-2xl font-bold text-blue-600 mb-2">BNX</div>
+                  <div className="text-sm text-gray-600">BNX Token</div>
                 </div>
 
                 {/* Amount Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {tradeType === 'buy' ? 'USD Amount to Spend' : 'Tiki Tokens to Sell'}
+                    {tradeType === 'buy' ? 'USD Amount to Spend' : 'BNX Tokens to Sell'}
                   </label>
                   <input
                     type="number"
@@ -514,12 +481,12 @@ export default function UserDashboard() {
                   />
                   {tradeType === 'buy' && tradeAmount && (
                     <p className="text-xs text-gray-500 mt-1">
-                      You will receive: {formatTiki(parseFloat(tradeAmount) / tikiPrice)} TIKI
+                      You will receive: {formatBnx(parseFloat(tradeAmount) / bnxPrice)} BNX
                     </p>
                   )}
                   {tradeType === 'sell' && tradeAmount && (
                     <p className="text-xs text-gray-500 mt-1">
-                      You will receive: {formatCurrency(parseFloat(tradeAmount) * tikiPrice, 'USD')}
+                      You will receive: {formatCurrency(parseFloat(tradeAmount) * bnxPrice, 'USD')}
                     </p>
                   )}
                 </div>
@@ -540,7 +507,7 @@ export default function UserDashboard() {
                       Processing...
                     </div>
                   ) : (
-                    `${tradeType === 'buy' ? 'Buy' : 'Sell'} Tiki Tokens`
+                    `${tradeType === 'buy' ? 'Buy' : 'Sell'} BNX Tokens`
                   )}
                 </Button>
               </div>
@@ -567,7 +534,7 @@ export default function UserDashboard() {
                         <p className="text-xs lg:text-sm font-medium text-gray-500 mb-1">Balance</p>
                         <p className="text-lg lg:text-2xl font-bold text-gray-900">{formatCurrency(usdBalance, 'USD')}</p>
                     </div>
-                  </div>
+                </div>
                 </div>
               </CardContent>
             </Card>
@@ -583,14 +550,14 @@ export default function UserDashboard() {
                     </div>
                     <div>
                         <p className="text-xs lg:text-sm font-medium text-gray-500 mb-1">Total Coins</p>
-                        <p className="text-lg lg:text-2xl font-bold text-gray-900">{formatTiki(tikiBalance)} TIKI</p>
+                        <p className="text-lg lg:text-2xl font-bold text-gray-900">{formatBnx(bnxBalance)} BNX</p>
                     </div>
-                  </div>
+                </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* TIKI Quick Stake Widget */}
+            {/* BNX Quick Stake Widget */}
             <Card className="hover:shadow-lg transition-shadow duration-200">
               <CardContent className="p-3 lg:p-6">
                 <div className="space-y-4">
@@ -609,28 +576,28 @@ export default function UserDashboard() {
                     <button
                       onClick={() => handleQuickStake(100, 7)}
                       className="p-2 text-xs bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-blue-700 font-medium"
-                      disabled={tikiBalance < 100}
+                      disabled={bnxBalance < 100}
                     >
                       7d (2%)
                     </button>
                     <button
                       onClick={() => handleQuickStake(500, 30)}
                       className="p-2 text-xs bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-green-700 font-medium"
-                      disabled={tikiBalance < 500}
+                      disabled={bnxBalance < 500}
                     >
                       30d (10%)
                     </button>
                     <button
                       onClick={() => handleQuickStake(1000, 90)}
                       className="p-2 text-xs bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-purple-700 font-medium"
-                      disabled={tikiBalance < 1000}
+                      disabled={bnxBalance < 1000}
                     >
                       90d (25%)
                     </button>
                   </div>
                   
                   <div className="text-xs text-gray-500 text-center">
-                    Stake TIKI tokens to earn rewards
+                    Stake BNX tokens to earn rewards
                   </div>
                 </div>
               </CardContent>
@@ -668,7 +635,7 @@ export default function UserDashboard() {
               <Card className="cursor-pointer">
                 <CardHeader className="p-4 lg:p-6">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg lg:text-xl">Recent Tiki Transactions</CardTitle>
+                    <CardTitle className="text-lg lg:text-xl">Recent BNX Transactions</CardTitle>
                     <Button variant="outline" size="sm" className="hidden sm:flex">
                       View All
                     </Button>
@@ -677,10 +644,10 @@ export default function UserDashboard() {
                 <CardContent className="p-4 lg:p-6">
                   <div className="space-y-3 lg:space-y-4">
                     {[
-                      { type: 'buy', asset: 'TIKI', amount: '1000', price: formatCurrency(tikiPrice, 'USD'), time: '2 min ago', status: 'completed' },
-                      { type: 'sell', asset: 'TIKI', amount: '500', price: formatCurrency(tikiPrice, 'USD'), time: '1 hour ago', status: 'completed' },
-                      { type: 'buy', asset: 'TIKI', amount: '2000', price: formatCurrency(tikiPrice, 'USD'), time: '3 hours ago', status: 'pending' },
-                      { type: 'sell', asset: 'TIKI', amount: '750', price: formatCurrency(tikiPrice, 'USD'), time: '1 day ago', status: 'completed' },
+                      { type: 'buy', asset: 'BNX', amount: '1000', price: formatCurrency(bnxPrice, 'USD'), time: '2 min ago', status: 'completed' },
+                      { type: 'sell', asset: 'BNX', amount: '500', price: formatCurrency(bnxPrice, 'USD'), time: '1 hour ago', status: 'completed' },
+                      { type: 'buy', asset: 'BNX', amount: '2000', price: formatCurrency(bnxPrice, 'USD'), time: '3 hours ago', status: 'pending' },
+                      { type: 'sell', asset: 'BNX', amount: '750', price: formatCurrency(bnxPrice, 'USD'), time: '1 day ago', status: 'completed' },
                     ].map((transaction, index) => (
                       <div key={index} className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                         <div className="flex items-center space-x-2 lg:space-x-3">
@@ -699,7 +666,7 @@ export default function UserDashboard() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm lg:text-base font-medium text-gray-900">{formatTiki(parseFloat(transaction.amount))} {transaction.asset}</p>
+                          <p className="text-sm lg:text-base font-medium text-gray-900">{formatBnx(parseFloat(transaction.amount))} {transaction.asset}</p>
                           <p className="text-xs lg:text-sm text-gray-500">{transaction.price}</p>
                         </div>
                         <div className="ml-2 lg:ml-4">
@@ -724,7 +691,7 @@ export default function UserDashboard() {
                      <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer">
                        <CardHeader className="p-4 sm:p-6">
                          <div className="flex items-center justify-between">
-                           <CardTitle className="text-lg sm:text-xl">Tiki Quick Trade</CardTitle>
+                           <CardTitle className="text-lg sm:text-xl">BNX Quick Trade</CardTitle>
                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
                              <span className="mr-2">⚡</span>
                              Live Tiki Price
@@ -743,7 +710,7 @@ export default function UserDashboard() {
                                }`}
                                onClick={() => setTradeType('buy')}
                              >
-                               Buy Tiki
+                               Buy BNX
                              </button>
                              <button 
                                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all duration-200 ${
@@ -757,16 +724,16 @@ export default function UserDashboard() {
                              </button>
                            </div>
 
-                           {/* Tiki Token Display */}
+                           {/* BNX Token Display */}
                            <div className="text-center p-4 bg-blue-50 rounded-lg">
-                             <div className="text-2xl font-bold text-blue-600 mb-2">TIKI</div>
-                             <div className="text-sm text-gray-600">Tiki Token</div>
+                             <div className="text-2xl font-bold text-blue-600 mb-2">BNX</div>
+                             <div className="text-sm text-gray-600">BNX Token</div>
                            </div>
 
                            {/* Amount Input */}
                            <div>
                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                               {tradeType === 'buy' ? 'USD Amount to Spend' : 'Tiki Tokens to Sell'}
+                               {tradeType === 'buy' ? 'USD Amount to Spend' : 'BNX Tokens to Sell'}
                              </label>
                              <input
                                type="number"
@@ -778,12 +745,12 @@ export default function UserDashboard() {
                              />
                              {tradeType === 'buy' && tradeAmount && (
                                <p className="text-xs text-gray-500 mt-1">
-                                 You will receive: {formatTiki(parseFloat(tradeAmount) / tikiPrice)} TIKI
+                                 You will receive: {formatBnx(parseFloat(tradeAmount) / bnxPrice)} BNX
                                </p>
                              )}
                              {tradeType === 'sell' && tradeAmount && (
                                <p className="text-xs text-gray-500 mt-1">
-                                 You will receive: {formatCurrency(parseFloat(tradeAmount) * tikiPrice, 'USD')}
+                                 You will receive: {formatCurrency(parseFloat(tradeAmount) * bnxPrice, 'USD')}
                                </p>
                              )}
                            </div>
@@ -792,11 +759,11 @@ export default function UserDashboard() {
                            <div className="p-4 bg-gray-50 rounded-lg">
                              <div className="flex justify-between text-sm mb-2">
                                <span className="text-gray-500">Current Tiki Price:</span>
-                               <span className="font-medium">{formatCurrency(tikiPrice, 'USD')}</span>
+                               <span className="font-medium">{formatCurrency(bnxPrice, 'USD')}</span>
                              </div>
                              <div className="flex justify-between text-sm mb-2">
                                <span className="text-gray-500">Amount:</span>
-                               <span className="font-medium">{tradeAmount || '0'} {tradeType === 'buy' ? 'USD' : 'TIKI'}</span>
+                               <span className="font-medium">{tradeAmount || '0'} {tradeType === 'buy' ? 'USD' : 'BNX'}</span>
                              </div>
                              <div className="flex justify-between text-sm font-semibold">
                                <span className="text-gray-700">Total:</span>
@@ -812,7 +779,7 @@ export default function UserDashboard() {
                                <div className="flex items-center">
                                  <span className="text-yellow-600 mr-2">⚠️</span>
                                  <span className="text-sm text-yellow-800">
-                                   Available: {formatTiki(tikiBalance)} TIKI
+                                   Available: {formatBnx(bnxBalance)} BNX
                                  </span>
                                </div>
                              </div>
@@ -834,7 +801,7 @@ export default function UserDashboard() {
                                  Processing...
                                </div>
                              ) : (
-                               `${tradeType === 'buy' ? 'Buy' : 'Sell'} Tiki Tokens`
+                               `${tradeType === 'buy' ? 'Buy' : 'Sell'} BNX Tokens`
                              )}
                            </Button>
 
@@ -869,15 +836,15 @@ export default function UserDashboard() {
                        </CardContent>
                      </Card>
 
-              {/* Tiki Market Overview */}
+              {/* BNX Market Overview */}
               <Card className="cursor-pointer">
                 <CardHeader>
-                  <CardTitle>Tiki Market Overview</CardTitle>
+                  <CardTitle>BNX Market Overview</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {[
-                      { name: 'Tiki Token', symbol: 'TIKI', price: formatCurrency(tikiPrice, 'USD'), change: '+2.34%', changeType: 'positive' },
+                      { name: 'BNX Token', symbol: 'BNX', price: formatCurrency(bnxPrice, 'USD'), change: '+2.34%', changeType: 'positive' },
                     ].map((asset, index) => (
                       <div key={index} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
                         <div className="flex items-center space-x-3">
@@ -917,6 +884,56 @@ export default function UserDashboard() {
 
             
 
+            {/* Investment Plans Section */}
+            <Card className="hover:shadow-lg transition-all duration-300">
+              <CardHeader className="p-4 lg:p-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg lg:text-xl">Investment Plans</CardTitle>
+                  <Button 
+                    onClick={() => router.push('/user/investment-plans')}
+                    className="bg-binance-primary hover:bg-binance-primary/90 text-white"
+                  >
+                    View All Plans
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 lg:p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-blue-800">Basic Plan</h3>
+                      <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">5%</span>
+                    </div>
+                    <p className="text-sm text-blue-600 mb-2">$100 - $1,000</p>
+                    <p className="text-xs text-blue-500">30 days duration</p>
+                  </div>
+                  
+                  <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-green-800">Silver Plan</h3>
+                      <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">8%</span>
+                    </div>
+                    <p className="text-sm text-green-600 mb-2">$1,000 - $5,000</p>
+                    <p className="text-xs text-green-500">60 days duration</p>
+                  </div>
+                  
+                  <div className="p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg border border-yellow-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-yellow-800">Gold Plan</h3>
+                      <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">12%</span>
+                    </div>
+                    <p className="text-sm text-yellow-600 mb-2">$5,000 - $25,000</p>
+                    <p className="text-xs text-yellow-500">90 days duration</p>
+                  </div>
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-600">
+                    Start investing and grow your wealth with our secure investment plans
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Quick Stats */}
             <Card className="hover:shadow-lg transition-all duration-300">
               <CardHeader className="p-4 lg:p-6">
@@ -945,8 +962,101 @@ export default function UserDashboard() {
                   <div className="text-center p-3 lg:p-4 bg-orange-50 rounded-lg hover:shadow-md transition-shadow">
                     <div className="text-xl lg:text-2xl xl:text-3xl font-bold text-orange-600 mb-1 lg:mb-2">{quickStats.successRate}%</div>
                     <div className="text-xs lg:text-sm text-gray-600">Success Rate</div>
-                  </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+            {/* User Investments Section */}
+            <Card className="hover:shadow-lg transition-all duration-300">
+              <CardHeader className="p-4 lg:p-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg lg:text-xl">My Investments</CardTitle>
+                  <Button 
+                    onClick={() => router.push('/plans')}
+                    className="bg-binance-primary hover:bg-binance-primary/90 text-white"
+                  >
+                    View All Plans
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 lg:p-6">
+                {loadingInvestments ? (
+                  <LoadingSkeleton type="list" count={2} />
+                ) : investmentsError ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">⚠️</div>
+                    <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Investments</h3>
+                    <p className="text-binance-textSecondary mb-4">{investmentsError}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      className="bg-binance-primary hover:bg-binance-primary/90"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                ) : userInvestments.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">📈</div>
+                    <h3 className="text-lg font-semibold text-binance-textPrimary mb-2">No Investments Yet</h3>
+                    <p className="text-binance-textSecondary mb-4">Start investing to grow your wealth</p>
+                    <Button
+                      onClick={() => router.push('/plans')}
+                      className="bg-binance-primary hover:bg-binance-primary/90"
+                    >
+                      Browse Investment Plans
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {userInvestments.slice(0, 3).map((investment) => (
+                      <div key={investment.id} className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-semibold text-blue-800">{investment.plan.planName}</h4>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            investment.status === 'ACTIVE' 
+                              ? 'bg-green-100 text-green-800' 
+                              : investment.status === 'COMPLETED'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {investment.status}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-blue-600">Amount:</span>
+                            <span className="font-semibold">{formatCurrency(investment.investedAmount)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-blue-600">Expected Return:</span>
+                            <span className="font-semibold text-green-600">{formatCurrency(investment.expectedReturn)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-blue-600">Start Date:</span>
+                            <span className="text-xs">{new Date(investment.startDate).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {userInvestments.length > 3 && (
+                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-2xl mb-2">+{userInvestments.length - 3}</div>
+                          <p className="text-sm text-gray-600">More investments</p>
+                          <Button
+                            onClick={() => router.push('/plans')}
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                          >
+                            View All
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -969,14 +1079,14 @@ export default function UserDashboard() {
               </h3>
               
               <p className="text-gray-600 text-center mb-6">
-                You are about to stake your TIKI tokens for rewards.
+                You are about to stake your BNX tokens for rewards.
               </p>
               
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Amount to Stake:</span>
-                    <span className="font-semibold text-gray-900">{formatTiki(pendingStake.amount)} TIKI</span>
+                    <span className="font-semibold text-gray-900">{formatBnx(pendingStake.amount)} BNX</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Duration:</span>
@@ -988,16 +1098,16 @@ export default function UserDashboard() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Reward Amount:</span>
-                    <span className="font-semibold text-green-600">{formatTiki(pendingStake.rewardAmount)} TIKI</span>
+                    <span className="font-semibold text-green-600">{formatBnx(pendingStake.rewardAmount)} BNX</span>
                   </div>
                   <div className="border-t pt-3">
                     <div className="flex justify-between">
                       <span className="text-gray-900 font-semibold">Total Return:</span>
-                      <span className="font-bold text-purple-600">{formatTiki(pendingStake.totalReturn)} TIKI</span>
+                      <span className="font-bold text-purple-600">{formatBnx(pendingStake.totalReturn)} BNX</span>
                     </div>
                   </div>
                 </div>
-              </div>
+        </div>
               
               <div className="flex space-x-3">
                 <Button
@@ -1019,8 +1129,16 @@ export default function UserDashboard() {
         </div>
       )}
 
-      {/* Toast Container */}
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
-    </Layout>
+        {/* Toast Container */}
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+      </Layout>
+  );
+}
+
+export default function UserDashboard() {
+  return (
+    <ErrorBoundary>
+        <UserDashboardContent />
+    </ErrorBoundary>
   );
 }

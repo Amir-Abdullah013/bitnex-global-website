@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth-context';
-import { useTiki } from '../../../lib/tiki-context';
+import { useUniversal } from '../../../lib/universal-context';
 import Layout from '../../../components/Layout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
 import { useToast, ToastContainer } from '../../../components/Toast';
 
-export default function WithdrawPage() {
+function WithdrawPageContent() {
   const { user, loading, isAuthenticated } = useAuth();
-  const { usdBalance, tikiBalance, tikiPrice, formatCurrency, formatTiki } = useTiki();
+  const { usdBalance, bnxBalance, bnxPrice, formatCurrency, formatBnx } = useUniversal();
   const router = useRouter();
   const { success, error, toasts, removeToast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -163,10 +163,10 @@ export default function WithdrawPage() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'COMPLETED': return 'bg-green-100 text-green-800';
-      case 'FAILED': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'PENDING': return 'bg-binance-primary/20 text-binance-primary border border-binance-primary/30';
+      case 'COMPLETED': return 'bg-binance-green/20 text-binance-green border border-binance-green/30';
+      case 'FAILED': return 'bg-binance-red/20 text-binance-red border border-binance-red/30';
+      default: return 'bg-binance-textTertiary/20 text-binance-textTertiary border border-binance-textTertiary/30';
     }
   };
 
@@ -181,10 +181,10 @@ export default function WithdrawPage() {
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-binance-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-binance-primary mx-auto mb-4"></div>
+          <p className="text-binance-textSecondary">Loading...</p>
         </div>
       </div>
     );
@@ -203,13 +203,13 @@ export default function WithdrawPage() {
             <Button
               variant="ghost"
               onClick={() => router.back()}
-              className="mr-4"
+              className="mr-4 text-binance-textSecondary hover:text-binance-textPrimary"
             >
               ← Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Withdraw Funds</h1>
-              <p className="text-gray-600 mt-1">Withdraw money to your Binance account</p>
+              <h1 className="text-3xl font-bold text-binance-textPrimary">Withdraw Funds</h1>
+              <p className="text-binance-textSecondary mt-1">Withdraw money to your Binance account</p>
             </div>
           </div>
         </div>
@@ -218,28 +218,28 @@ export default function WithdrawPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">USD Balance</CardTitle>
+              <CardTitle className="text-lg text-binance-textPrimary">USD Balance</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-binance-textPrimary">
                   {formatCurrency(usdBalance, 'USD')}
                 </h2>
-                <p className="text-sm text-gray-500">Available USD</p>
+                <p className="text-sm text-binance-textSecondary">Available USD</p>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Tiki Balance</CardTitle>
+              <CardTitle className="text-lg text-binance-textPrimary">BNX Balance</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {formatTiki(tikiBalance)} TIKI
+                <h2 className="text-2xl font-bold text-binance-textPrimary">
+                  {formatBnx(bnxBalance)} BNX
                 </h2>
-                <p className="text-sm text-gray-500">Available Tokens</p>
+                <p className="text-sm text-binance-textSecondary">Available Tokens</p>
               </div>
             </CardContent>
           </Card>
@@ -248,27 +248,27 @@ export default function WithdrawPage() {
         {/* Withdrawal Instructions */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">📋 Withdrawal Instructions</CardTitle>
+            <CardTitle className="text-lg text-binance-textPrimary">📋 Withdrawal Instructions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">Step 1: Enter Withdrawal Details</h3>
-                <p className="text-blue-800 text-sm">
+              <div className="bg-binance-primary/10 border border-binance-primary/30 p-4 rounded-lg">
+                <h3 className="font-semibold text-binance-textPrimary mb-2">Step 1: Enter Withdrawal Details</h3>
+                <p className="text-binance-textSecondary text-sm">
                   Enter the amount you want to withdraw and your Binance wallet address.
                 </p>
               </div>
               
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-green-900 mb-2">Step 2: Submit Request</h3>
-                <p className="text-green-800 text-sm">
+              <div className="bg-binance-green/10 border border-binance-green/30 p-4 rounded-lg">
+                <h3 className="font-semibold text-binance-textPrimary mb-2">Step 2: Submit Request</h3>
+                <p className="text-binance-textSecondary text-sm">
                   Submit your withdrawal request. The amount will be deducted from your balance immediately.
                 </p>
               </div>
               
-              <div className="bg-yellow-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-yellow-900 mb-2">Step 3: Admin Processing</h3>
-                <p className="text-yellow-800 text-sm">
+              <div className="bg-binance-primary/10 border border-binance-primary/30 p-4 rounded-lg">
+                <h3 className="font-semibold text-binance-textPrimary mb-2">Step 3: Admin Processing</h3>
+                <p className="text-binance-textSecondary text-sm">
                   Our admin team will manually send the funds to your Binance account within 24 hours.
                 </p>
               </div>
@@ -279,13 +279,13 @@ export default function WithdrawPage() {
         {/* Withdrawal Form */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Submit Withdrawal Request</CardTitle>
+            <CardTitle className="text-binance-textPrimary">Submit Withdrawal Request</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Amount Input */}
               <div>
-                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="amount" className="block text-sm font-medium text-binance-textSecondary mb-2">
                   Withdrawal Amount (USD) *
                 </label>
                 <div className="relative">
@@ -299,24 +299,24 @@ export default function WithdrawPage() {
                     value={formData.amount}
                     onChange={handleInputChange}
                     placeholder="Enter amount in USD"
-                    className={`pr-20 ${errors.amount ? 'border-red-500' : ''}`}
+                    className={`pr-20 ${errors.amount ? 'border-binance-red' : ''}`}
                     disabled={isSubmitting}
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <span className="text-gray-500 text-sm">USD</span>
+                    <span className="text-binance-textTertiary text-sm">USD</span>
                   </div>
                 </div>
                 {errors.amount && (
-                  <p className="mt-1 text-sm text-red-600">{errors.amount}</p>
+                  <p className="mt-1 text-sm text-binance-red">{errors.amount}</p>
                 )}
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-binance-textTertiary">
                   Minimum: ${MIN_WITHDRAW_AMOUNT} | Maximum: ${MAX_WITHDRAW_AMOUNT} | Available: {formatCurrency(usdBalance, 'USD')}
                 </p>
               </div>
 
               {/* Binance Address Input */}
               <div>
-                <label htmlFor="binanceAddress" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="binanceAddress" className="block text-sm font-medium text-binance-textSecondary mb-2">
                   Binance Wallet Address *
                 </label>
                 <Input
@@ -326,13 +326,13 @@ export default function WithdrawPage() {
                   value={formData.binanceAddress}
                   onChange={handleInputChange}
                   placeholder="Enter your Binance wallet address"
-                  className={errors.binanceAddress ? 'border-red-500' : ''}
+                  className={errors.binanceAddress ? 'border-binance-red' : ''}
                   disabled={isSubmitting}
                 />
                 {errors.binanceAddress && (
-                  <p className="mt-1 text-sm text-red-600">{errors.binanceAddress}</p>
+                  <p className="mt-1 text-sm text-binance-red">{errors.binanceAddress}</p>
                 )}
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-binance-textTertiary">
                   Enter your Binance wallet address where you want to receive the funds
                 </p>
               </div>
@@ -350,7 +350,7 @@ export default function WithdrawPage() {
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-red-600 hover:bg-red-700"
+                  className="flex-1 bg-binance-red hover:bg-binance-red/80"
                   disabled={isSubmitting || !formData.amount || !formData.binanceAddress || !!errors.amount || !!errors.binanceAddress}
                 >
                   {isSubmitting ? (
@@ -370,28 +370,28 @@ export default function WithdrawPage() {
         {/* Withdrawal History */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Withdrawal History</CardTitle>
+            <CardTitle className="text-lg text-binance-textPrimary">Withdrawal History</CardTitle>
           </CardHeader>
           <CardContent>
             {loadingWithdrawals ? (
               <div className="text-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <p className="text-gray-600">Loading withdrawals...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-binance-primary mx-auto mb-2"></div>
+                <p className="text-binance-textSecondary">Loading withdrawals...</p>
               </div>
             ) : withdrawals.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">No withdrawal requests yet.</p>
+                <p className="text-binance-textTertiary">No withdrawal requests yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {withdrawals.map((withdrawal) => (
-                  <div key={withdrawal.id} className="border rounded-lg p-4">
+                  <div key={withdrawal.id} className="border border-binance-border rounded-lg p-4 bg-binance-surface/50">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-binance-textPrimary">
                           {formatCurrency(withdrawal.amount, 'USD')}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-binance-textSecondary">
                           {new Date(withdrawal.createdAt).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -405,7 +405,7 @@ export default function WithdrawPage() {
                         {getStatusText(withdrawal.status)}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-binance-textSecondary">
                       <p><strong>Binance Address:</strong> {withdrawal.binanceAddress}</p>
                     </div>
                   </div>
@@ -418,7 +418,7 @@ export default function WithdrawPage() {
         {/* Information Card */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="text-lg">Important Information</CardTitle>
+            <CardTitle className="text-lg text-binance-textPrimary">Important Information</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -427,8 +427,8 @@ export default function WithdrawPage() {
                   <span className="text-2xl">⏱️</span>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-gray-900">Processing Time</h3>
-                  <p className="text-sm text-gray-600">Withdrawals are typically processed within 24 hours after admin review.</p>
+                  <h3 className="text-sm font-medium text-binance-textPrimary">Processing Time</h3>
+                  <p className="text-sm text-binance-textSecondary">Withdrawals are typically processed within 24 hours after admin review.</p>
                 </div>
               </div>
               
@@ -437,8 +437,8 @@ export default function WithdrawPage() {
                   <span className="text-2xl">💰</span>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-gray-900">Balance Deduction</h3>
-                  <p className="text-sm text-gray-600">The withdrawal amount is deducted immediately when you submit the request.</p>
+                  <h3 className="text-sm font-medium text-binance-textPrimary">Balance Deduction</h3>
+                  <p className="text-sm text-binance-textSecondary">The withdrawal amount is deducted immediately when you submit the request.</p>
                 </div>
               </div>
               
@@ -447,8 +447,8 @@ export default function WithdrawPage() {
                   <span className="text-2xl">🔄</span>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-gray-900">Refunds</h3>
-                  <p className="text-sm text-gray-600">If your withdrawal is rejected, the amount will be automatically refunded to your balance.</p>
+                  <h3 className="text-sm font-medium text-binance-textPrimary">Refunds</h3>
+                  <p className="text-sm text-binance-textSecondary">If your withdrawal is rejected, the amount will be automatically refunded to your balance.</p>
                 </div>
               </div>
             </div>
@@ -460,4 +460,8 @@ export default function WithdrawPage() {
       </div>
     </Layout>
   );
+}
+
+export default function WithdrawPage() {
+  return <WithdrawPageContent />;
 }

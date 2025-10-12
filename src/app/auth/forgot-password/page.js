@@ -9,13 +9,19 @@ import Card, { CardContent } from '../../../components/Card';
 import { AlertModal } from '../../../components/Modal';
 
 export default function ForgotPasswordPage() {
-  const { forgotPassword, loading } = useAuth();
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('error');
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
+  const [loading, setLoading] = useState(false);
+  const [resetToken, setResetToken] = useState('');
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -36,38 +42,134 @@ export default function ForgotPasswordPage() {
     return true;
   };
 
-  const handleSubmit = async (e) => {
+  const validatePasswords = () => {
+    if (!newPassword) {
+      setPasswordError('New password is required');
+      return false;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters long');
+      return false;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSendOTP = async (e) => {
     e.preventDefault();
     
     if (!validateEmail()) {
       return;
     }
-    
+
+    setLoading(true);
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetch('/api/auth/send-otp', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
       });
 
-      const data = await response.json();
+      const result = await response.json();
       
-      if (data.success) {
-        setAlertMessage(data.message);
+      if (result.success) {
+        setStep(2);
+        setAlertMessage('OTP sent to your email. Please check your inbox.');
         setAlertType('success');
-        setIsSubmitted(true);
       } else {
-        setAlertMessage(data.error);
+        setAlertMessage(result.error);
         setAlertType('error');
       }
+      
+      setShowAlert(true);
     } catch (error) {
-      setAlertMessage('Network error. Please try again.');
+      setAlertMessage('Failed to send OTP. Please try again.');
       setAlertType('error');
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
     
-    setShowAlert(true);
+    if (!otp || otp.length !== 6) {
+      setOtpError('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setResetToken(result.resetToken);
+        setStep(3);
+        setAlertMessage('OTP verified successfully. Please set your new password.');
+        setAlertType('success');
+      } else {
+        setAlertMessage(result.error);
+        setAlertType('error');
+      }
+      
+      setShowAlert(true);
+    } catch (error) {
+      setAlertMessage('Failed to verify OTP. Please try again.');
+      setAlertType('error');
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!validatePasswords()) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email, 
+          token: resetToken, 
+          newPassword 
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setAlertMessage('Password reset successfully! You can now sign in with your new password.');
+        setAlertType('success');
+        setStep(4); // Success step
+      } else {
+        setAlertMessage(result.error);
+        setAlertType('error');
+      }
+      
+      setShowAlert(true);
+    } catch (error) {
+      setAlertMessage('Failed to reset password. Please try again.');
+      setAlertType('error');
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (isSubmitted) {

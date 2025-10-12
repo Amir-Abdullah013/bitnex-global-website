@@ -1,0 +1,106 @@
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+// GET /api/cron/update-investments - Cron job to update investment statuses
+export async function GET(request) {
+  try {
+    // Verify this is a legitimate cron request (you might want to add authentication)
+    const authHeader = request.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET || 'your-cron-secret';
+    
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const now = new Date();
+    
+    // Find investments that should be completed
+    const investmentsToComplete = await prisma.investment.findMany({
+      where: {
+        status: 'ACTIVE',
+        endDate: {
+          lte: now
+        }
+      },
+      include: {
+        plan: true,
+        user: true
+      }
+    });
+
+    if (investmentsToComplete.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'No investments to update',
+        updated: 0,
+        timestamp: now.toISOString()
+      });
+    }
+
+    // Update investments to completed status
+    const updateResult = await prisma.investment.updateMany({
+      where: {
+        id: {
+          in: investmentsToComplete.map(inv => inv.id)
+        }
+      },
+      data: {
+        status: 'COMPLETED'
+      }
+    });
+
+    // Add completed amount to user's wallet balance
+    for (const investment of investmentsToComplete) {
+      const returnAmount = investment.investedAmount + (investment.investedAmount * investment.plan.profitPercentage / 100);
+      
+      // Update user's wallet balance
+      await prisma.wallet.update({
+        where: { userId: investment.userId },
+        data: {
+          balance: {
+            increment: returnAmount
+          }
+        }
+      });
+
+      // Create transaction record for the return
+      await prisma.transaction.create({
+        data: {
+          userId: investment.userId,
+          type: 'INVESTMENT_RETURN',
+          amount: returnAmount,
+          status: 'COMPLETED',
+          description: `Investment return from ${investment.plan.planName} plan`
+        }
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Updated ${updateResult.count} investments to completed status`,
+      updated: updateResult.count,
+      timestamp: now.toISOString(),
+      investments: investmentsToComplete.map(inv => ({
+        id: inv.id,
+        userId: inv.userId,
+        planName: inv.plan.planName,
+        amount: inv.investedAmount,
+        returnAmount: inv.investedAmount + (inv.investedAmount * inv.plan.profitPercentage / 100)
+      }))
+    });
+
+  } catch (error) {
+    console.error('Error updating investment statuses:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to update investment statuses' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}

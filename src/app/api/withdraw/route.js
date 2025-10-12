@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession, getUserRole } from '../../../lib/session';
 import { databaseHelpers } from '../../../lib/database';
 import { handleApiError, handleValidationError, handleAuthError } from '../error-handler';
+import { feeCalculator } from '../../../lib/fee-calculator';
 
 export async function POST(request) {
   try {
@@ -83,13 +84,21 @@ export async function POST(request) {
       }
     }
 
-    if (amount > userWallet.balance) {
-      return handleValidationError('Insufficient balance');
+    // Calculate withdrawal fee
+    const feeCalculation = await feeCalculator.calculateWithdrawalFee({
+      asset: 'USD', // Assuming USD withdrawals
+      amount: amount
+    });
+
+    const totalDeduction = amount + feeCalculation.feeAmount;
+
+    if (totalDeduction > userWallet.balance) {
+      return handleValidationError(`Insufficient balance. Required: ${totalDeduction.toFixed(2)} (including ${feeCalculation.feeAmount.toFixed(2)} fee)`);
     }
 
-    // Deduct amount from user's balance immediately (freeze it)
+    // Deduct amount + fee from user's balance immediately (freeze it)
     try {
-      await databaseHelpers.wallet.updateBalance(session.id, -amount);
+      await databaseHelpers.wallet.updateBalance(session.id, -totalDeduction);
     } catch (balanceError) {
       console.error('Error updating balance:', balanceError);
       return handleApiError(balanceError, 'Balance update');
@@ -106,7 +115,9 @@ export async function POST(request) {
         status: 'PENDING',
         gateway: 'Binance',
         binanceAddress,
-        description: `Withdrawal request to ${binanceAddress}`
+        description: `Withdrawal request to ${binanceAddress}`,
+        fee: feeCalculation.feeAmount,
+        netAmount: feeCalculation.netAmount
       });
     } catch (transactionError) {
       console.error('Error creating transaction:', transactionError);
@@ -124,7 +135,7 @@ export async function POST(request) {
       await databaseHelpers.notification.createNotification({
         userId: session.id,
         title: 'Withdrawal Request Submitted',
-        message: `Your withdrawal request of $${amount} has been submitted and is pending admin approval.`,
+        message: `Your withdrawal request of $${amount} (fee: $${feeCalculation.feeAmount.toFixed(2)}, net: $${feeCalculation.netAmount.toFixed(2)}) has been submitted and is pending admin approval.`,
         type: 'INFO'
       });
     } catch (notificationError) {
@@ -145,8 +156,16 @@ export async function POST(request) {
       transaction: {
         id: transaction.id,
         amount,
+        fee: feeCalculation.feeAmount,
+        netAmount: feeCalculation.netAmount,
         status: 'PENDING',
         binanceAddress
+      },
+      feeBreakdown: {
+        withdrawalAmount: amount,
+        feeAmount: feeCalculation.feeAmount,
+        netAmount: feeCalculation.netAmount,
+        feeRate: feeCalculation.breakdown.feeRate
       }
     });
 

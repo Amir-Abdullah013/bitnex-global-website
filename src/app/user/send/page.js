@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth-context';
-import { useTiki } from '../../../lib/tiki-context';
+import { useMinimalDashboard, MinimalDashboardProvider } from '../../../lib/minimal-dashboard-context';
 import Layout from '../../../components/Layout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
@@ -77,9 +77,9 @@ const TransferRow = ({ transfer, type }) => {
   );
 };
 
-export default function SendTokensPage() {
+function SendTokensPageContent() {
   const { user, loading, isAuthenticated } = useAuth();
-  const { tikiBalance, formatTiki, fetchUserWallet } = useTiki();
+  const { bnxBalance, formatBnx } = useMinimalDashboard();
   const router = useRouter();
   const { success, error, toasts, removeToast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -432,4 +432,5 @@ export default function SendTokensPage() {
     </Layout>
   );
 }
+
 

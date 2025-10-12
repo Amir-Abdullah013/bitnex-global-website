@@ -1,235 +1,330 @@
-// Theme configuration for consistent colors across the application
-export const theme = {
-  colors: {
-    // Primary colors
-    primary: {
-      50: '#eff6ff',
-      100: '#dbeafe',
-      200: '#bfdbfe',
-      300: '#93c5fd',
-      400: '#60a5fa',
-      500: '#3b82f6',
-      600: '#2563eb',
-      700: '#1d4ed8',
-      800: '#1e40af',
-      900: '#1e3a8a',
-    },
-    
-    // Secondary colors
-    secondary: {
-      50: '#f8fafc',
-      100: '#f1f5f9',
-      200: '#e2e8f0',
-      300: '#cbd5e1',
-      400: '#94a3b8',
-      500: '#64748b',
-      600: '#475569',
-      700: '#334155',
-      800: '#1e293b',
-      900: '#0f172a',
-    },
-    
-    // Success colors
-    success: {
-      50: '#f0fdf4',
-      100: '#dcfce7',
-      200: '#bbf7d0',
-      300: '#86efac',
-      400: '#4ade80',
-      500: '#22c55e',
-      600: '#16a34a',
-      700: '#15803d',
-      800: '#166534',
-      900: '#14532d',
-    },
-    
-    // Warning colors
-    warning: {
-      50: '#fffbeb',
-      100: '#fef3c7',
-      200: '#fde68a',
-      300: '#fcd34d',
-      400: '#fbbf24',
-      500: '#f59e0b',
-      600: '#d97706',
-      700: '#b45309',
-      800: '#92400e',
-      900: '#78350f',
-    },
-    
-    // Error colors
-    error: {
-      50: '#fef2f2',
-      100: '#fee2e2',
-      200: '#fecaca',
-      300: '#fca5a5',
-      400: '#f87171',
-      500: '#ef4444',
-      600: '#dc2626',
-      700: '#b91c1c',
-      800: '#991b1b',
-      900: '#7f1d1d',
-    },
-    
-    // Info colors
-    info: {
-      50: '#f0f9ff',
-      100: '#e0f2fe',
-      200: '#bae6fd',
-      300: '#7dd3fc',
-      400: '#38bdf8',
-      500: '#0ea5e9',
-      600: '#0284c7',
-      700: '#0369a1',
-      800: '#075985',
-      900: '#0c4a6e',
-    },
-    
-    // Neutral colors
-    neutral: {
-      50: '#fafafa',
-      100: '#f5f5f5',
-      200: '#e5e5e5',
-      300: '#d4d4d4',
-      400: '#a3a3a3',
-      500: '#737373',
-      600: '#525252',
-      700: '#404040',
-      800: '#262626',
-      900: '#171717',
+/**
+ * Enhanced Theme System
+ * Binance dark theme with gold accents and comprehensive color palette
+ */
+
+export const themes = {
+  light: {
+    name: 'Light',
+    colors: {
+      // Background colors
+      background: '#FFFFFF',
+      surface: '#F8F9FA',
+      surfaceHover: '#E9ECEF',
+      
+      // Text colors
+      textPrimary: '#212529',
+      textSecondary: '#6C757D',
+      textTertiary: '#ADB5BD',
+      
+      // Border colors
+      border: '#DEE2E6',
+      borderHover: '#CED4DA',
+      
+      // Accent colors
+      primary: '#F0B90B',
+      primaryHover: '#FCD535',
+      success: '#0ECB81',
+      successHover: '#0ECB81',
+      danger: '#F6465D',
+      dangerHover: '#F6465D',
+      warning: '#F59E0B',
+      warningHover: '#F59E0B',
+      
+      // Chart colors
+      chartGreen: '#0ECB81',
+      chartRed: '#F6465D',
+      chartBlue: '#3B82F6',
+      chartYellow: '#F0B90B',
+      
+      // Status colors
+      online: '#0ECB81',
+      offline: '#F6465D',
+      pending: '#F59E0B',
+      
+      // Overlay colors
+      overlay: 'rgba(0, 0, 0, 0.5)',
+      modal: 'rgba(0, 0, 0, 0.8)',
     }
   },
   
-  // Component-specific color schemes
-  components: {
-    // User dashboard theme
-    user: {
-      primary: '#3b82f6',      // Blue
-      secondary: '#64748b',     // Slate
-      accent: '#22c55e',        // Green
-      background: '#f8fafc',    // Light gray
-      surface: '#ffffff',       // White
-      text: '#1e293b',          // Dark slate
-      textSecondary: '#64748b'  // Medium slate
-    },
-    
-    // Admin dashboard theme
-    admin: {
-      primary: '#7c3aed',       // Purple
-      secondary: '#64748b',      // Slate
-      accent: '#f59e0b',        // Amber
-      background: '#f8fafc',    // Light gray
-      surface: '#ffffff',       // White
-      text: '#1e293b',           // Dark slate
-      textSecondary: '#64748b'   // Medium slate
-    },
-    
-    // Landing page theme
-    landing: {
-      primary: '#3b82f6',       // Blue
-      secondary: '#64748b',      // Slate
-      accent: '#22c55e',        // Green
-      background: '#ffffff',     // White
-      surface: '#f8fafc',        // Light gray
-      text: '#1e293b',           // Dark slate
-      textSecondary: '#64748b'   // Medium slate
+  dark: {
+    name: 'Dark',
+    colors: {
+      // Background colors (Binance dark theme)
+      background: '#0B0E11',
+      surface: '#181A20',
+      surfaceHover: '#1E2329',
+      surfaceSecondary: '#2B3139',
+      
+      // Text colors
+      textPrimary: '#EAECEF',
+      textSecondary: '#B7BDC6',
+      textTertiary: '#848E9C',
+      
+      // Border colors
+      border: '#2B3139',
+      borderHover: '#3C4043',
+      borderLight: '#3C4043',
+      
+      // Accent colors (Binance gold theme)
+      primary: '#F0B90B',
+      primaryHover: '#FCD535',
+      primaryLight: '#FCD535',
+      primaryDark: '#D4AF37',
+      
+      // Success/Error colors
+      success: '#0ECB81',
+      successHover: '#0ECB81',
+      successLight: '#0ECB81',
+      successDark: '#0ECB81',
+      
+      danger: '#F6465D',
+      dangerHover: '#F6465D',
+      dangerLight: '#F6465D',
+      dangerDark: '#F6465D',
+      
+      warning: '#F59E0B',
+      warningHover: '#F59E0B',
+      warningLight: '#F59E0B',
+      warningDark: '#F59E0B',
+      
+      // Chart colors
+      chartGreen: '#0ECB81',
+      chartRed: '#F6465D',
+      chartBlue: '#3B82F6',
+      chartYellow: '#F0B90B',
+      chartPurple: '#8B5CF6',
+      chartOrange: '#F59E0B',
+      
+      // Status colors
+      online: '#0ECB81',
+      offline: '#F6465D',
+      pending: '#F59E0B',
+      loading: '#F0B90B',
+      
+      // Overlay colors
+      overlay: 'rgba(0, 0, 0, 0.5)',
+      modal: 'rgba(0, 0, 0, 0.8)',
+      backdrop: 'rgba(0, 0, 0, 0.3)',
+      
+      // Special Binance colors
+      binance: {
+        primary: '#F0B90B',
+        background: '#0B0E11',
+        surface: '#181A20',
+        surfaceHover: '#1E2329',
+        textPrimary: '#EAECEF',
+        textSecondary: '#B7BDC6',
+        textTertiary: '#848E9C',
+        green: '#0ECB81',
+        red: '#F6465D',
+        border: '#2B3139',
+        borderHover: '#3C4043',
+      }
     }
+  }
+};
+
+export const defaultTheme = 'dark';
+
+export const getTheme = (themeName = defaultTheme) => {
+  return themes[themeName] || themes[defaultTheme];
+};
+
+export const getThemeColors = (themeName = defaultTheme) => {
+  const theme = getTheme(themeName);
+  return theme.colors;
+};
+
+export const getThemeColor = (colorName, themeName = defaultTheme) => {
+  const colors = getThemeColors(themeName);
+  return colors[colorName] || colors.textPrimary;
+};
+
+// CSS Variables for dynamic theming
+export const generateCSSVariables = (themeName = defaultTheme) => {
+  const colors = getThemeColors(themeName);
+  const cssVars = {};
+  
+  Object.entries(colors).forEach(([key, value]) => {
+    if (typeof value === 'object') {
+      // Handle nested objects like binance
+      Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+        cssVars[`--color-${key}-${nestedKey}`] = nestedValue;
+      });
+    } else {
+      cssVars[`--color-${key}`] = value;
+    }
+  });
+  
+  return cssVars;
+};
+
+// Tailwind CSS color configuration
+export const tailwindColors = {
+  // Background colors
+  background: {
+    DEFAULT: 'var(--color-background)',
+    surface: 'var(--color-surface)',
+    'surface-hover': 'var(--color-surfaceHover)',
+    'surface-secondary': 'var(--color-surfaceSecondary)',
+  },
+  
+  // Text colors
+  text: {
+    primary: 'var(--color-textPrimary)',
+    secondary: 'var(--color-textSecondary)',
+    tertiary: 'var(--color-textTertiary)',
+  },
+  
+  // Border colors
+  border: {
+    DEFAULT: 'var(--color-border)',
+    hover: 'var(--color-borderHover)',
+    light: 'var(--color-borderLight)',
+  },
+  
+  // Accent colors
+  primary: {
+    DEFAULT: 'var(--color-primary)',
+    hover: 'var(--color-primaryHover)',
+    light: 'var(--color-primaryLight)',
+    dark: 'var(--color-primaryDark)',
+  },
+  
+  success: {
+    DEFAULT: 'var(--color-success)',
+    hover: 'var(--color-successHover)',
+    light: 'var(--color-successLight)',
+    dark: 'var(--color-successDark)',
+  },
+  
+  danger: {
+    DEFAULT: 'var(--color-danger)',
+    hover: 'var(--color-dangerHover)',
+    light: 'var(--color-dangerLight)',
+    dark: 'var(--color-dangerDark)',
+  },
+  
+  warning: {
+    DEFAULT: 'var(--color-warning)',
+    hover: 'var(--color-warningHover)',
+    light: 'var(--color-warningLight)',
+    dark: 'var(--color-warningDark)',
+  },
+  
+  // Chart colors
+  chart: {
+    green: 'var(--color-chartGreen)',
+    red: 'var(--color-chartRed)',
+    blue: 'var(--color-chartBlue)',
+    yellow: 'var(--color-chartYellow)',
+    purple: 'var(--color-chartPurple)',
+    orange: 'var(--color-chartOrange)',
   },
   
   // Status colors
   status: {
-    online: '#22c55e',          // Green
-    offline: '#ef4444',         // Red
-    pending: '#f59e0b',         // Amber
-    processing: '#3b82f6',      // Blue
-    completed: '#22c55e',       // Green
-    failed: '#ef4444',          // Red
-    cancelled: '#64748b'        // Slate
+    online: 'var(--color-online)',
+    offline: 'var(--color-offline)',
+    pending: 'var(--color-pending)',
+    loading: 'var(--color-loading)',
   },
   
-  // Transaction status colors
-  transaction: {
-    pending: '#f59e0b',         // Amber
-    completed: '#22c55e',       // Green
-    failed: '#ef4444',          // Red
-    cancelled: '#64748b',       // Slate
-    processing: '#3b82f6'       // Blue
-  },
-  
-  // Notification type colors
-  notification: {
-    info: '#3b82f6',            // Blue
-    success: '#22c55e',         // Green
-    warning: '#f59e0b',         // Amber
-    error: '#ef4444'            // Red
+  // Binance specific colors
+  binance: {
+    primary: 'var(--color-binance-primary)',
+    background: 'var(--color-binance-background)',
+    surface: 'var(--color-binance-surface)',
+    'surface-hover': 'var(--color-binance-surfaceHover)',
+    'text-primary': 'var(--color-binance-textPrimary)',
+    'text-secondary': 'var(--color-binance-textSecondary)',
+    'text-tertiary': 'var(--color-binance-textTertiary)',
+    green: 'var(--color-binance-green)',
+    red: 'var(--color-binance-red)',
+    border: 'var(--color-binance-border)',
+    'border-hover': 'var(--color-binance-borderHover)',
   }
 };
 
-// Theme utility functions
-export const themeUtils = {
-  // Get component colors
-  getComponentColors(component) {
-    return theme.components[component] || theme.components.user;
+// Typography configuration
+export const typography = {
+  fontFamily: {
+    sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
+    mono: ['var(--font-geist-mono)', 'monospace'],
   },
   
-  // Get status color
-  getStatusColor(status) {
-    return theme.status[status] || theme.colors.neutral[500];
+  fontSize: {
+    xs: ['0.75rem', { lineHeight: '1rem' }],
+    sm: ['0.875rem', { lineHeight: '1.25rem' }],
+    base: ['1rem', { lineHeight: '1.5rem' }],
+    lg: ['1.125rem', { lineHeight: '1.75rem' }],
+    xl: ['1.25rem', { lineHeight: '1.75rem' }],
+    '2xl': ['1.5rem', { lineHeight: '2rem' }],
+    '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+    '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+    '5xl': ['3rem', { lineHeight: '1' }],
+    '6xl': ['3.75rem', { lineHeight: '1' }],
   },
   
-  // Get transaction status color
-  getTransactionColor(status) {
-    return theme.transaction[status] || theme.colors.neutral[500];
-  },
-  
-  // Get notification color
-  getNotificationColor(type) {
-    return theme.notification[type] || theme.colors.neutral[500];
-  },
-  
-  // Generate color variants
-  generateColorVariants(baseColor) {
-    return {
-      light: `${baseColor}20`,
-      medium: `${baseColor}40`,
-      dark: `${baseColor}80`
-    };
+  fontWeight: {
+    normal: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+    extrabold: '800',
   }
 };
 
-// CSS custom properties for dynamic theming
-export const generateCSSVariables = (component = 'user') => {
-  const colors = themeUtils.getComponentColors(component);
-  
-  return {
-    '--color-primary': colors.primary,
-    '--color-secondary': colors.secondary,
-    '--color-accent': colors.accent,
-    '--color-background': colors.background,
-    '--color-surface': colors.surface,
-    '--color-text': colors.text,
-    '--color-text-secondary': colors.textSecondary
-  };
+// Spacing configuration
+export const spacing = {
+  '0': '0',
+  '1': '0.25rem',
+  '2': '0.5rem',
+  '3': '0.75rem',
+  '4': '1rem',
+  '5': '1.25rem',
+  '6': '1.5rem',
+  '8': '2rem',
+  '10': '2.5rem',
+  '12': '3rem',
+  '16': '4rem',
+  '20': '5rem',
+  '24': '6rem',
+  '32': '8rem',
+  '40': '10rem',
+  '48': '12rem',
+  '56': '14rem',
+  '64': '16rem',
 };
 
-export default theme;
+// Animation configuration
+export const animations = {
+  duration: {
+    fast: '150ms',
+    normal: '300ms',
+    slow: '500ms',
+  },
+  
+  easing: {
+    linear: 'linear',
+    ease: 'ease',
+    easeIn: 'ease-in',
+    easeOut: 'ease-out',
+    easeInOut: 'ease-in-out',
+  }
+};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export default {
+  themes,
+  defaultTheme,
+  getTheme,
+  getThemeColors,
+  getThemeColor,
+  generateCSSVariables,
+  tailwindColors,
+  typography,
+  spacing,
+  animations
+};

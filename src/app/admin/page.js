@@ -106,7 +106,7 @@ export default function AdminLoginPage() {
     return (
       <Layout showSidebar={false}>
         <div className="flex justify-center items-center h-full">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-binance-primary"></div>
         </div>
       </Layout>
     );
@@ -114,15 +114,15 @@ export default function AdminLoginPage() {
 
   return (
     <Layout showSidebar={false}>
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-binance-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
-            <div className="mx-auto h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto h-16 w-16 bg-binance-primary/20 border border-binance-primary/30 rounded-full flex items-center justify-center mb-4">
               <span className="text-3xl">⚙️</span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Admin Access</h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <h2 className="text-3xl font-bold text-binance-textPrimary">Admin Access</h2>
+            <p className="mt-2 text-sm text-binance-textSecondary">
               Sign in to access the admin panel
             </p>
           </div>
@@ -130,12 +130,12 @@ export default function AdminLoginPage() {
           {/* Login Form */}
             <Card className="shadow-xl">
               <CardHeader>
-                <CardTitle className="text-center text-red-700">Administrator Login</CardTitle>
+                <CardTitle className="text-center text-binance-textPrimary">Administrator Login</CardTitle>
               </CardHeader>
               <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-binance-textSecondary mb-2">
                     Email Address *
                   </label>
                   <Input
@@ -145,16 +145,16 @@ export default function AdminLoginPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="Enter your admin email"
-                    className={errors.email ? 'border-red-500' : ''}
+                    className={errors.email ? 'border-binance-red' : ''}
                     disabled={isSubmitting}
                   />
                   {errors.email && (
-                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                    <p className="mt-1 text-sm text-binance-red">{errors.email}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="password" className="block text-sm font-medium text-binance-textSecondary mb-2">
                     Password *
                   </label>
                   <Input
@@ -164,17 +164,17 @@ export default function AdminLoginPage() {
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="Enter your password"
-                    className={errors.password ? 'border-red-500' : ''}
+                    className={errors.password ? 'border-binance-red' : ''}
                     disabled={isSubmitting}
                   />
                   {errors.password && (
-                    <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                    <p className="mt-1 text-sm text-binance-red">{errors.password}</p>
                   )}
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-binance-primary hover:bg-binance-primary/80 text-binance-background"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Signing In...' : 'Sign In to Admin Panel'}
@@ -182,14 +182,14 @@ export default function AdminLoginPage() {
               </form>
 
               {/* Security Notice */}
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="mt-6 p-4 bg-binance-primary/10 border border-binance-primary/30 rounded-md">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <span className="text-yellow-400">⚠️</span>
+                    <span className="text-binance-primary">⚠️</span>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-yellow-800">Security Notice</h3>
-                    <div className="mt-2 text-sm text-yellow-700">
+                    <h3 className="text-sm font-medium text-binance-textPrimary">Security Notice</h3>
+                    <div className="mt-2 text-sm text-binance-textSecondary">
                       <p>This is a restricted area. Only authorized administrators can access this panel.</p>
                     </div>
                   </div>
@@ -198,11 +198,11 @@ export default function AdminLoginPage() {
 
               {/* Back to User Login */}
               <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-binance-textSecondary">
                   Not an admin?{' '}
                   <button
                     onClick={() => router.push('/auth/signin')}
-                    className="font-medium text-blue-600 hover:text-blue-500"
+                    className="font-medium text-binance-primary hover:text-binance-primary/80"
                   >
                     Go to User Login
                   </button>

@@ -33,13 +33,13 @@ export default function CreateUserPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading) {
+    if (mounted && !isLoading) {
       if (!isAuthenticated) {
         router.push('/auth/signin');
         return;
       }
     }
-  }, [mounted, loading, isAuthenticated, router]);
+  }, [mounted, isLoading, isAuthenticated, router]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

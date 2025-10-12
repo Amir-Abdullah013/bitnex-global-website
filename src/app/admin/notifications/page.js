@@ -56,14 +56,14 @@ export default function AdminNotificationsPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading) {
+    if (mounted && !isLoading) {
       if (!isAuthenticated) {
         router.push('/auth/signin');
         return;
       }
       loadNotifications();
     }
-  }, [mounted, loading, isAuthenticated]);
+  }, [mounted, isLoading, isAuthenticated]);
 
   // Reload notifications when filters change
   useEffect(() => {

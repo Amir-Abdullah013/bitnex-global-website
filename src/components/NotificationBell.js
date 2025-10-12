@@ -115,19 +115,19 @@ export default function NotificationBell() {
 
   const getNotificationColor = (type, status) => {
     if (status === 'READ') {
-      return 'bg-gray-50';
+      return 'bg-binance-surface';
     }
     
     switch (type) {
       case 'SUCCESS':
-        return 'bg-green-50';
+        return 'bg-binance-green/10';
       case 'WARNING':
-        return 'bg-yellow-50';
+        return 'bg-binance-primary/10';
       case 'ALERT':
-        return 'bg-red-50';
+        return 'bg-binance-red/10';
       case 'INFO':
       default:
-        return 'bg-blue-50';
+        return 'bg-binance-surface';
     }
   };
 
@@ -140,7 +140,7 @@ export default function NotificationBell() {
       {/* Bell Icon */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full"
+        className="relative p-2 text-binance-textSecondary hover:text-binance-textPrimary focus:outline-none focus:ring-2 focus:ring-binance-primary rounded-full transition-colors"
       >
         <svg
           className="w-6 h-6"
@@ -158,54 +158,54 @@ export default function NotificationBell() {
         
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 bg-binance-red text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
-      {/* Dropdown */}
+      {/* Modal */}
       {isOpen && (
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Dropdown Content */}
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+          {/* Modal Content */}
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 max-w-[90vw] bg-binance-surface rounded-xl shadow-2xl border border-binance-border z-50 max-h-[80vh] flex flex-col">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-200">
+            <div className="px-6 py-4 border-b border-binance-border">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+                <h3 className="text-lg font-semibold text-binance-textPrimary">Notifications</h3>
                 <button
                   onClick={handleViewAll}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-binance-primary hover:text-binance-primary/80 font-medium"
                 >
                   View all
                 </button>
               </div>
               {unreadCount > 0 && (
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-binance-textSecondary mt-1">
                   {unreadCount} unread notification{unreadCount > 1 ? 's' : ''}
                 </p>
               )}
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="px-4 py-8 text-center">
-                  <div className="text-gray-400 text-4xl mb-2">🔔</div>
-                  <p className="text-gray-600">No notifications yet</p>
+                <div className="px-6 py-8 text-center">
+                  <div className="text-binance-textTertiary text-4xl mb-2">🔔</div>
+                  <p className="text-binance-textSecondary">No notifications yet</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-binance-border">
                   {notifications.map((notification, index) => (
                     <div
                       key={notification.id || notification.$id || `notification-${index}`}
-                      className={`px-4 py-3 hover:bg-gray-50 cursor-pointer ${getNotificationColor(notification.type, notification.status)}`}
+                      className={`px-6 py-4 hover:bg-binance-surfaceHover cursor-pointer transition-colors ${getNotificationColor(notification.type, notification.status)}`}
                       onClick={() => handleViewNotification(notification.id || notification.$id)}
                     >
                       <div className="flex items-start space-x-3">
@@ -216,16 +216,16 @@ export default function NotificationBell() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <h4 className={`text-sm font-medium ${
-                              notification.status === 'UNREAD' ? 'text-gray-900' : 'text-gray-700'
+                              notification.status === 'UNREAD' ? 'text-binance-textPrimary' : 'text-binance-textSecondary'
                             }`}>
                               {notification.title}
                             </h4>
                             {notification.status === 'UNREAD' && (
-                              <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                              <div className="w-2 h-2 bg-binance-primary rounded-full flex-shrink-0"></div>
                             )}
                           </div>
                           
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                          <p className="text-sm text-binance-textSecondary mt-1 line-clamp-2">
                             {notification.message.length > 80 
                               ? `${notification.message.substring(0, 80)}...` 
                               : notification.message
@@ -233,7 +233,7 @@ export default function NotificationBell() {
                           </p>
                           
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-binance-textTertiary">
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </span>
                             
@@ -243,7 +243,7 @@ export default function NotificationBell() {
                                   e.stopPropagation();
                                   handleMarkAsRead(notification.$id);
                                 }}
-                                className="text-xs text-blue-600 hover:text-blue-800"
+                                className="text-xs text-binance-primary hover:text-binance-primary/80 font-medium"
                               >
                                 Mark as read
                               </button>
@@ -259,10 +259,10 @@ export default function NotificationBell() {
 
             {/* Footer */}
             {notifications.length > 0 && (
-              <div className="px-4 py-3 border-t border-gray-200">
+              <div className="px-6 py-4 border-t border-binance-border">
                 <button
                   onClick={handleViewAll}
-                  className="w-full text-center text-sm text-blue-600 hover:text-blue-800"
+                  className="w-full text-center text-sm text-binance-primary hover:text-binance-primary/80 font-medium py-2 px-4 rounded-lg hover:bg-binance-primary/10 transition-colors"
                 >
                   View all notifications
                 </button>

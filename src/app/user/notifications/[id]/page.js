@@ -97,25 +97,25 @@ export default function NotificationDetailPage() {
 
   const getNotificationColor = (type, status) => {
     if (status === 'read') {
-      return 'bg-gray-50 border-gray-200';
+      return 'bg-binance-surface border-binance-border';
     }
     
     switch (type) {
       case 'success':
-        return 'bg-green-50 border-green-200';
+        return 'bg-binance-green/10 border-binance-green/30';
       case 'warning':
-        return 'bg-yellow-50 border-yellow-200';
+        return 'bg-binance-primary/10 border-binance-primary/30';
       case 'alert':
-        return 'bg-red-50 border-red-200';
+        return 'bg-binance-red/10 border-binance-red/30';
       case 'info':
       default:
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-binance-surface border-binance-border';
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-binance-background flex items-center justify-center">
         <Loader />
       </div>
     );
@@ -123,14 +123,14 @@ export default function NotificationDetailPage() {
 
   if (!notification) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-binance-background flex items-center justify-center">
         <Card className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">❌</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Notification not found</h3>
-          <p className="text-gray-600 mb-6">The notification you're looking for doesn't exist or you don't have access to it.</p>
+          <div className="text-binance-textTertiary text-6xl mb-4">❌</div>
+          <h3 className="text-xl font-semibold text-binance-textPrimary mb-2">Notification not found</h3>
+          <p className="text-binance-textSecondary mb-6">The notification you're looking for doesn't exist or you don't have access to it.</p>
           <Button
             onClick={() => router.push('/user/notifications')}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-binance-primary hover:bg-binance-primary/80 text-binance-background"
           >
             Back to Notifications
           </Button>
@@ -140,21 +140,21 @@ export default function NotificationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-binance-background">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <Button
             onClick={() => router.push('/user/notifications')}
-            className="mb-4 bg-gray-600 hover:bg-gray-700 text-white"
+            className="mb-4 bg-binance-surface hover:bg-binance-surfaceHover text-binance-textPrimary border border-binance-border"
           >
             ← Back to Notifications
           </Button>
           
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Notification Details</h1>
-              <p className="text-gray-600 mt-2">
+              <h1 className="text-3xl font-bold text-binance-textPrimary">Notification Details</h1>
+              <p className="text-binance-textSecondary mt-2">
                 {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
               </p>
             </div>
@@ -162,7 +162,7 @@ export default function NotificationDetailPage() {
               <Button
                 onClick={handleMarkAsRead}
                 disabled={markingAsRead}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-binance-primary hover:bg-binance-primary/80 text-binance-background"
               >
                 {markingAsRead ? 'Marking as Read...' : 'Mark as Read'}
               </Button>
@@ -172,7 +172,7 @@ export default function NotificationDetailPage() {
 
         {/* Notification Content */}
         <Card className={`${getNotificationColor(notification.type, notification.status)} ${
-          notification.status === 'unread' ? 'ring-2 ring-blue-200' : ''
+          notification.status === 'unread' ? 'ring-2 ring-binance-primary/30' : ''
         }`}>
           <div className="flex items-start space-x-4">
             <div className="text-4xl">
@@ -182,51 +182,51 @@ export default function NotificationDetailPage() {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`text-2xl font-bold ${
-                  notification.status === 'unread' ? 'text-gray-900' : 'text-gray-700'
+                  notification.status === 'unread' ? 'text-binance-textPrimary' : 'text-binance-textSecondary'
                 }`}>
                   {notification.title}
                 </h2>
                 {notification.status === 'unread' && (
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                    <span className="text-sm font-medium text-blue-600">Unread</span>
+                    <div className="w-3 h-3 bg-binance-primary rounded-full"></div>
+                    <span className="text-sm font-medium text-binance-primary">Unread</span>
                   </div>
                 )}
               </div>
               
               <div className="mb-6">
                 <p className={`text-lg leading-relaxed ${
-                  notification.status === 'unread' ? 'text-gray-800' : 'text-gray-600'
+                  notification.status === 'unread' ? 'text-binance-textPrimary' : 'text-binance-textSecondary'
                 }`}>
                   {notification.message}
                 </p>
               </div>
               
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-between pt-4 border-t border-binance-border">
                 <div className="flex items-center space-x-4">
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    notification.type === 'success' ? 'bg-green-100 text-green-800' :
-                    notification.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                    notification.type === 'alert' ? 'bg-red-100 text-red-800' :
-                    'bg-blue-100 text-blue-800'
+                    notification.type === 'success' ? 'bg-binance-green/20 text-binance-green border border-binance-green/30' :
+                    notification.type === 'warning' ? 'bg-binance-primary/20 text-binance-primary border border-binance-primary/30' :
+                    notification.type === 'alert' ? 'bg-binance-red/20 text-binance-red border border-binance-red/30' :
+                    'bg-binance-surface border border-binance-border text-binance-textSecondary'
                   }`}>
                     {notification.type}
                   </span>
                   
                   {notification.userId && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-binance-primary/20 text-binance-primary border border-binance-primary/30">
                       Personal Notification
                     </span>
                   )}
                   
                   {!notification.userId && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-binance-surface border border-binance-border text-binance-textSecondary">
                       Global Notification
                     </span>
                   )}
                 </div>
                 
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-binance-textTertiary">
                   Created {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                 </div>
               </div>
@@ -238,7 +238,7 @@ export default function NotificationDetailPage() {
         <div className="mt-8 flex items-center justify-between">
           <Button
             onClick={() => router.push('/user/notifications')}
-            className="bg-gray-600 hover:bg-gray-700 text-white"
+            className="bg-binance-surface hover:bg-binance-surfaceHover text-binance-textPrimary border border-binance-border"
           >
             ← Back to Notifications
           </Button>
@@ -247,7 +247,7 @@ export default function NotificationDetailPage() {
             <Button
               onClick={handleMarkAsRead}
               disabled={markingAsRead}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-binance-primary hover:bg-binance-primary/80 text-binance-background"
             >
               {markingAsRead ? 'Marking as Read...' : 'Mark as Read'}
             </Button>

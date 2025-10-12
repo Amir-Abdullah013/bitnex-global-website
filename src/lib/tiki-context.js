@@ -286,7 +286,7 @@ export const TikiProvider = ({ children }) => {
   // Fetch current price from API
   const fetchCurrentPrice = async () => {
     try {
-      const response = await fetch('/api/tiki/price', {
+      const response = await fetch('/api/price', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

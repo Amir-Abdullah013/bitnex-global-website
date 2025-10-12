@@ -1,9 +1,9 @@
 'use client';
 
-import { useTiki } from '../lib/tiki-context';
+import { useBitnex } from '../lib/bitnex-context';
 
-const TikiStatusBar = () => {
-  const { usdBalance, tikiBalance, tikiPrice, formatCurrency, formatTiki, isLoading } = useTiki();
+const BnxStatusBar = () => {
+  const { usdBalance, bnxBalance, bnxPrice, formatCurrency, formatBnx, isLoading } = useBitnex();
 
   // Don't show status bar while loading
   if (isLoading) {
@@ -17,9 +17,9 @@ const TikiStatusBar = () => {
           {/* Left side - Tiki Price */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <span className="font-semibold">Tiki Price:</span>
+              <span className="font-semibold">BNX Price:</span>
               <span className="font-bold text-yellow-300">
-                {formatCurrency(tikiPrice, 'USD')}
+                {formatCurrency(bnxPrice, 'USD')}
               </span>
             </div>
           </div>
@@ -33,9 +33,9 @@ const TikiStatusBar = () => {
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="font-semibold">Tiki:</span>
+              <span className="font-semibold">BNX:</span>
               <span className="font-bold text-yellow-300">
-                {formatTiki(tikiBalance)} TIKI
+                {formatBnx(bnxBalance)} BNX
               </span>
             </div>
           </div>
@@ -45,7 +45,8 @@ const TikiStatusBar = () => {
   );
 };
 
-export default TikiStatusBar;
+export default BnxStatusBar;
+
 
 
 

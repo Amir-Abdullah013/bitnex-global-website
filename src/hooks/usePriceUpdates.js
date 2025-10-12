@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useTiki } from '../lib/tiki-context';
+import { useBitnex } from '../lib/bitnex-context';
 
 export function usePriceUpdates(interval = 5000) {
-  const { fetchCurrentPrice } = useTiki();
+  const { fetchCurrentPrice } = useBitnex();
   const intervalRef = useRef(null);
 
   useEffect(() => {

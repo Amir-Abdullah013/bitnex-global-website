@@ -12,7 +12,7 @@ const AdminStats = ({ className = '' }) => {
       changeType: 'positive',
       icon: '👥',
       description: 'vs last month',
-      color: 'bg-blue-500'
+      color: 'bg-binance-primary'
     },
     {
       title: 'Active Wallets',
@@ -21,7 +21,7 @@ const AdminStats = ({ className = '' }) => {
       changeType: 'positive',
       icon: '💼',
       description: 'active accounts',
-      color: 'bg-green-500'
+      color: 'bg-binance-green'
     },
     {
       title: 'Total Deposits',
@@ -30,7 +30,7 @@ const AdminStats = ({ className = '' }) => {
       changeType: 'positive',
       icon: '💰',
       description: 'this month',
-      color: 'bg-emerald-500'
+      color: 'bg-binance-green'
     },
     {
       title: 'Total Withdrawals',
@@ -39,7 +39,7 @@ const AdminStats = ({ className = '' }) => {
       changeType: 'positive',
       icon: '💸',
       description: 'this month',
-      color: 'bg-red-500'
+      color: 'bg-binance-red'
     },
     {
       title: 'Pending Transactions',
@@ -48,7 +48,7 @@ const AdminStats = ({ className = '' }) => {
       changeType: 'neutral',
       icon: '⏳',
       description: 'awaiting approval',
-      color: 'bg-yellow-500'
+      color: 'bg-binance-primary'
     },
     {
       title: 'System Health',
@@ -57,7 +57,7 @@ const AdminStats = ({ className = '' }) => {
       changeType: 'positive',
       icon: '⚡',
       description: 'uptime',
-      color: 'bg-purple-500'
+      color: 'bg-binance-green'
     }
   ]);
 
@@ -76,7 +76,7 @@ const AdminStats = ({ className = '' }) => {
               changeType: 'positive',
               icon: '👥',
               description: 'vs last month',
-              color: 'bg-blue-500'
+              color: 'bg-binance-primary'
             },
             {
               title: 'Active Wallets',
@@ -85,7 +85,7 @@ const AdminStats = ({ className = '' }) => {
               changeType: 'positive',
               icon: '💼',
               description: 'active accounts',
-              color: 'bg-green-500'
+              color: 'bg-binance-green'
             },
             {
               title: 'Total Deposits',
@@ -94,7 +94,7 @@ const AdminStats = ({ className = '' }) => {
               changeType: 'positive',
               icon: '💰',
               description: 'this month',
-              color: 'bg-emerald-500'
+              color: 'bg-binance-green'
             },
             {
               title: 'Total Withdrawals',
@@ -103,7 +103,7 @@ const AdminStats = ({ className = '' }) => {
               changeType: 'positive',
               icon: '💸',
               description: 'this month',
-              color: 'bg-red-500'
+              color: 'bg-binance-red'
             },
             {
               title: 'Pending Transactions',
@@ -112,7 +112,7 @@ const AdminStats = ({ className = '' }) => {
               changeType: 'neutral',
               icon: '⏳',
               description: 'awaiting approval',
-              color: 'bg-yellow-500'
+              color: 'bg-binance-primary'
             },
             {
               title: 'System Health',
@@ -121,7 +121,7 @@ const AdminStats = ({ className = '' }) => {
               changeType: 'positive',
               icon: '⚡',
               description: 'uptime',
-              color: 'bg-purple-500'
+              color: 'bg-binance-green'
             }
           ]);
         }
@@ -143,20 +143,20 @@ const AdminStats = ({ className = '' }) => {
                 <span className="text-white text-xl">{stat.icon}</span>
               </div>
               <div className={`text-sm font-medium ${
-                stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
+                stat.changeType === 'positive' ? 'text-binance-green' : 'text-binance-red'
               }`}>
                 {stat.change}
               </div>
             </div>
             
             <div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">
+              <h3 className="text-sm font-medium text-binance-textSecondary mb-1">
                 {stat.title}
               </h3>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
+              <p className="text-2xl font-bold text-binance-textPrimary mb-1">
                 {stat.value}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-binance-textTertiary">
                 {stat.description}
               </p>
             </div>

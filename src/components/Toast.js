@@ -32,7 +32,7 @@ const Toast = ({
   };
 
   const getToastStyles = () => {
-    const baseStyles = "fixed z-50 max-w-sm w-full bg-white rounded-lg shadow-lg border-l-4 p-4 transition-all duration-300 transform";
+    const baseStyles = "fixed z-50 max-w-sm w-full bg-binance-surface rounded-lg shadow-lg border-l-4 p-4 transition-all duration-300 transform border border-binance-border";
     
     const positionStyles = {
       'top-right': 'top-4 right-4',
@@ -44,10 +44,10 @@ const Toast = ({
     };
 
     const typeStyles = {
-      success: 'border-green-500 bg-green-50',
-      error: 'border-red-500 bg-red-50',
-      warning: 'border-yellow-500 bg-yellow-50',
-      info: 'border-blue-500 bg-blue-50'
+      success: 'border-l-binance-green bg-binance-green/10',
+      error: 'border-l-binance-red bg-binance-red/10',
+      warning: 'border-l-binance-primary bg-binance-primary/10',
+      info: 'border-l-binance-textSecondary bg-binance-textSecondary/10'
     };
 
     const animationStyles = isExiting 
@@ -69,10 +69,10 @@ const Toast = ({
 
   const getTextColor = () => {
     const colors = {
-      success: 'text-green-800',
-      error: 'text-red-800',
-      warning: 'text-yellow-800',
-      info: 'text-blue-800'
+      success: 'text-binance-green',
+      error: 'text-binance-red',
+      warning: 'text-binance-primary',
+      info: 'text-binance-textPrimary'
     };
     return colors[type];
   };
@@ -86,13 +86,13 @@ const Toast = ({
           <span className="text-lg">{getIcon()}</span>
         </div>
         <div className="ml-3 w-0 flex-1">
-          <p className={`text-sm font-medium ${getTextColor()}`}>
+          <p className={`text-sm font-medium text-binance-textPrimary`}>
             {message}
           </p>
         </div>
         <div className="ml-4 flex-shrink-0 flex">
           <button
-            className={`inline-flex ${getTextColor()} hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md`}
+            className={`inline-flex text-binance-textSecondary hover:text-binance-textPrimary hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-binance-primary rounded-md`}
             onClick={handleClose}
           >
             <span className="sr-only">Close</span>

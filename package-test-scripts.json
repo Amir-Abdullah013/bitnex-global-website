@@ -1,0 +1,18 @@
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "node tests/run-all-tests.js",
+    "test:api": "jest --testPathPattern=api",
+    "test:components": "jest --testPathPattern=components",
+    "test:loading": "jest --testPathPattern=loading",
+    "test:auth": "jest --testPathPattern=auth",
+    "test:report": "jest --coverage && playwright show-report",
+    "test:install": "npm install @playwright/test @testing-library/jest-dom @testing-library/react @testing-library/user-event jest jest-environment-jsdom supertest msw",
+    "test:setup": "npx playwright install",
+    "test:ci": "npm run test && npm run test:e2e"
+  }
+}

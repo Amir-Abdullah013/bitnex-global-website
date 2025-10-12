@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
-import Layout from '../../../components/Layout';
+import AdminLayout from '../../../components/AdminLayout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
@@ -41,14 +41,14 @@ export default function AdminUsersPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading) {
+    if (mounted && !isLoading) {
       if (!isAuthenticated) {
         router.push('/auth/signin');
         return;
       }
       loadUsers();
     }
-  }, [mounted, loading, isAuthenticated, router]);
+  }, [mounted, isLoading, isAuthenticated, router]);
 
   // Load users from API
   const loadUsers = async () => {
@@ -238,10 +238,10 @@ export default function AdminUsersPage() {
 
   if (!mounted || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-binance-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-binance-primary mx-auto mb-4"></div>
+          <p className="text-binance-textSecondary">Loading...</p>
         </div>
       </div>
     );
@@ -252,18 +252,18 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <Layout showSidebar={true}>
+    <AdminLayout showSidebar={true}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-              <p className="text-gray-600 mt-1">Manage users, roles, and permissions</p>
+              <h1 className="text-3xl font-bold text-binance-textPrimary">User Management</h1>
+              <p className="text-binance-textSecondary mt-1">Manage users, roles, and permissions</p>
             </div>
             <Button
               onClick={() => router.push('/admin/users/create')}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-binance-green hover:bg-binance-green/80"
             >
               Add New User
             </Button>
@@ -276,13 +276,13 @@ export default function AdminUsersPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-blue-600 text-lg">👥</span>
+                  <div className="w-8 h-8 bg-binance-primary/20 border border-binance-primary/30 rounded-lg flex items-center justify-center">
+                    <span className="text-binance-primary text-lg">👥</span>
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+                  <p className="text-sm font-medium text-binance-textSecondary">Total Users</p>
+                  <p className="text-2xl font-bold text-binance-textPrimary">{totalUsers}</p>
                 </div>
               </div>
             </CardContent>
@@ -292,13 +292,13 @@ export default function AdminUsersPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-green-600 text-lg">✅</span>
+                  <div className="w-8 h-8 bg-binance-green/20 border border-binance-green/30 rounded-lg flex items-center justify-center">
+                    <span className="text-binance-green text-lg">✅</span>
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Active Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{activeUsers}</p>
+                  <p className="text-sm font-medium text-binance-textSecondary">Active Users</p>
+                  <p className="text-2xl font-bold text-binance-textPrimary">{activeUsers}</p>
                 </div>
               </div>
             </CardContent>
@@ -308,13 +308,13 @@ export default function AdminUsersPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <span className="text-purple-600 text-lg">👑</span>
+                  <div className="w-8 h-8 bg-binance-primary/20 border border-binance-primary/30 rounded-lg flex items-center justify-center">
+                    <span className="text-binance-primary text-lg">👑</span>
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Admins</p>
-                  <p className="text-2xl font-bold text-gray-900">{adminUsers}</p>
+                  <p className="text-sm font-medium text-binance-textSecondary">Admins</p>
+                  <p className="text-2xl font-bold text-binance-textPrimary">{adminUsers}</p>
                 </div>
               </div>
             </CardContent>
@@ -324,13 +324,13 @@ export default function AdminUsersPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <span className="text-yellow-600 text-lg">💰</span>
+                  <div className="w-8 h-8 bg-binance-primary/20 border border-binance-primary/30 rounded-lg flex items-center justify-center">
+                    <span className="text-binance-primary text-lg">💰</span>
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Users with Balance</p>
-                  <p className="text-2xl font-bold text-gray-900">{usersWithBalance}</p>
+                  <p className="text-sm font-medium text-binance-textSecondary">Users with Balance</p>
+                  <p className="text-2xl font-bold text-binance-textPrimary">{usersWithBalance}</p>
                 </div>
               </div>
             </CardContent>
@@ -643,9 +643,9 @@ export default function AdminUsersPage() {
 
         {/* Toast Container */}
         <ToastContainer toasts={toasts} removeToast={removeToast} />
-      </div>
-    </Layout>
-  );
-}
+        </div>
+      </AdminLayout>
+    );
+  }
 
 

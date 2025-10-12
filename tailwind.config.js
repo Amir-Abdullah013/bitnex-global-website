@@ -13,30 +13,67 @@ module.exports = {
         '5xl': '3440px',
       },
       colors: {
-        // Design System Colors
+        // Binance-Style Design System - Professional Trading Platform
+        binance: {
+          primary: '#F0B90B', // Binance Yellow (exact)
+          background: '#1E2329', // Binance Dark Background (lighter)
+          surface: '#2B3139', // Card/Surface Background
+          surfaceHover: '#3C4043', // Hover State
+          textPrimary: '#EAECEF', // Primary Text
+          textSecondary: '#B7BDC6', // Secondary Text
+          textTertiary: '#848E9C', // Tertiary Text
+          green: '#0ECB81', // Buy/Profit
+          red: '#F6465D', // Sell/Loss
+          border: '#3C4043', // Border Color
+        },
+        border: '#3C4043', // Global border color
         primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1', // Main primary
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+          50: '#FFFBEB',
+          100: '#FEF3C7',
+          200: '#FDE68A',
+          300: '#FCD535', // Binance Yellow
+          400: '#F59E0B',
+          500: '#D97706',
+          600: '#B45309',
+          700: '#92400E',
+          800: '#78350F',
+          900: '#451A03',
         },
         secondary: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          300: '#d1d5db',
-          400: '#9ca3af',
-          500: '#6b7280', // Main secondary
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-          900: '#111827',
+          50: '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B',
+          600: '#475569',
+          700: '#334155',
+          800: '#1E293B',
+          900: '#0F172A',
+        },
+        dark: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+        gold: {
+          50: '#fefce8',
+          100: '#fef9c3',
+          200: '#fef08a',
+          300: '#fde047',
+          400: '#facc15',
+          500: '#eab308',
+          600: '#ca8a04',
+          700: '#a16207',
+          800: '#854d0e',
+          900: '#713f12',
         },
         success: {
           50: '#f0fdf4',
@@ -74,6 +111,15 @@ module.exports = {
           800: '#991b1b',
           900: '#7f1d1d',
         },
+        // BNX Brand Colors
+        bnx: {
+          primary: '#eab308', // Gold
+          secondary: '#0f172a', // Dark
+          accent: '#facc15', // Light gold
+          success: '#22c55e',
+          warning: '#f59e0b',
+          error: '#ef4444',
+        },
       },
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
@@ -110,6 +156,7 @@ module.exports = {
     },
   },
   plugins: [],
+  darkMode: 'class',
 }
 
 

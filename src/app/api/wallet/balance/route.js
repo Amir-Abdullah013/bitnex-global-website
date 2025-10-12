@@ -31,19 +31,19 @@ export async function GET(request) {
       return NextResponse.json({
         success: true,
         usdBalance: newWallet.balance || 0,
-        tikiBalance: newWallet.tikiBalance || 0,
-        tikiPrice: 0.0035
+        bnxBalance: newWallet.bnxBalance || 0,
+        bnxPrice: 0.0035
       });
     }
 
-    // Get current TIKI price
-    const tikiPrice = await databaseHelpers.tokenStats.getCurrentPrice();
+    // Get current BNX price
+    const bnxPrice = await databaseHelpers.tokenStats.getCurrentPrice();
 
     return NextResponse.json({
       success: true,
       usdBalance: wallet.balance || 0,
-      tikiBalance: wallet.tikiBalance || 0,
-      tikiPrice: tikiPrice
+      bnxBalance: wallet.bnxBalance || 0,
+      bnxPrice: bnxPrice
     });
 
   } catch (error) {

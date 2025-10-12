@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
-import Layout from '../../../components/Layout';
+import AdminLayout from '../../../components/AdminLayout';
 import AdminRoute from '../../../components/AdminRoute';
 import AdminStats from '../../../components/AdminStats';
 import Button from '../../../components/Button';
@@ -87,10 +87,10 @@ export default function AdminDashboard() {
 
   if (!mounted || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-binance-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-binance-primary mx-auto mb-4"></div>
+          <p className="text-binance-textSecondary">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -100,12 +100,12 @@ export default function AdminDashboard() {
 
   return (
     <AdminRoute>
-      <Layout showSidebar={true}>
+      <AdminLayout showSidebar={true}>
         <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back, {adminUser?.name || 'Admin'}! Manage your application.</p>
+          <h1 className="text-3xl font-bold text-binance-textPrimary">Admin Dashboard</h1>
+          <p className="text-binance-textSecondary mt-2">Welcome back, {adminUser?.name || 'Admin'}! Manage your application.</p>
         </div>
 
         {/* Admin Stats */}
@@ -120,26 +120,26 @@ export default function AdminDashboard() {
             {/* User Management */}
             <Card>
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
+                <CardTitle className="text-binance-textPrimary">User Management</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="p-4 bg-binance-primary/10 border border-binance-primary/30 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-blue-900">Total Users</h3>
+                      <h3 className="font-semibold text-binance-textPrimary">Total Users</h3>
                       <span className="text-2xl">👥</span>
                     </div>
-                    <p className="text-3xl font-bold text-blue-900 mb-1">{dashboardData.totalUsers.toLocaleString()}</p>
-                    <p className="text-sm text-blue-700">Total registered users</p>
+                    <p className="text-3xl font-bold text-binance-textPrimary mb-1">{dashboardData.totalUsers.toLocaleString()}</p>
+                    <p className="text-sm text-binance-textSecondary">Total registered users</p>
                   </div>
                   
-                  <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="p-4 bg-binance-green/10 border border-binance-green/30 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-green-900">Active Users</h3>
+                      <h3 className="font-semibold text-binance-textPrimary">Active Users</h3>
                       <span className="text-2xl">✅</span>
                     </div>
-                    <p className="text-3xl font-bold text-green-900 mb-1">{dashboardData.activeUsers.toLocaleString()}</p>
-                    <p className="text-sm text-green-700">Users with active wallets</p>
+                    <p className="text-3xl font-bold text-binance-textPrimary mb-1">{dashboardData.activeUsers.toLocaleString()}</p>
+                    <p className="text-sm text-binance-textSecondary">Users with active wallets</p>
                   </div>
                 </div>
                 
@@ -163,26 +163,26 @@ export default function AdminDashboard() {
             {/* Transaction Management */}
             <Card>
               <CardHeader>
-                <CardTitle>Transaction Overview</CardTitle>
+                <CardTitle className="text-binance-textPrimary">Transaction Overview</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="text-center p-4 bg-emerald-50 rounded-lg">
-                    <h3 className="font-semibold text-emerald-900 mb-1">Total Deposits</h3>
-                    <p className="text-2xl font-bold text-emerald-900">${dashboardData.totalDeposits.toLocaleString()}</p>
-                    <p className="text-sm text-emerald-700">Total deposits processed</p>
+                  <div className="text-center p-4 bg-binance-green/10 border border-binance-green/30 rounded-lg">
+                    <h3 className="font-semibold text-binance-textPrimary mb-1">Total Deposits</h3>
+                    <p className="text-2xl font-bold text-binance-textPrimary">${dashboardData.totalDeposits.toLocaleString()}</p>
+                    <p className="text-sm text-binance-textSecondary">Total deposits processed</p>
                   </div>
                   
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <h3 className="font-semibold text-red-900 mb-1">Total Withdrawals</h3>
-                    <p className="text-2xl font-bold text-red-900">${dashboardData.totalWithdrawals.toLocaleString()}</p>
-                    <p className="text-sm text-red-700">Total withdrawals processed</p>
+                  <div className="text-center p-4 bg-binance-red/10 border border-binance-red/30 rounded-lg">
+                    <h3 className="font-semibold text-binance-textPrimary mb-1">Total Withdrawals</h3>
+                    <p className="text-2xl font-bold text-binance-textPrimary">${dashboardData.totalWithdrawals.toLocaleString()}</p>
+                    <p className="text-sm text-binance-textSecondary">Total withdrawals processed</p>
                   </div>
                   
-                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                    <h3 className="font-semibold text-yellow-900 mb-1">Pending</h3>
-                    <p className="text-2xl font-bold text-yellow-900">{dashboardData.pendingTransactions}</p>
-                    <p className="text-sm text-yellow-700">transactions pending</p>
+                  <div className="text-center p-4 bg-binance-primary/10 border border-binance-primary/30 rounded-lg">
+                    <h3 className="font-semibold text-binance-textPrimary mb-1">Pending</h3>
+                    <p className="text-2xl font-bold text-binance-textPrimary">{dashboardData.pendingTransactions}</p>
+                    <p className="text-sm text-binance-textSecondary">transactions pending</p>
                   </div>
                 </div>
                 
@@ -211,6 +211,53 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Investment Plans Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-binance-textPrimary">Investment Plans Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <p className="text-binance-textSecondary text-sm mb-4">
+                    Create and manage investment plans for users. Set profit rates, duration, and investment limits.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-blue-800">Active Plans</h3>
+                        <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">3</span>
+                      </div>
+                      <p className="text-sm text-blue-600">Currently available for users</p>
+                    </div>
+                    
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-green-800">Total Investments</h3>
+                        <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">$45,230</span>
+                      </div>
+                      <p className="text-sm text-green-600">Active user investments</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <Button 
+                    variant="primary"
+                    onClick={() => router.push('/admin/investment-plans')}
+                  >
+                    Manage Plans
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => router.push('/admin/investment-plans')}
+                  >
+                    View All Plans
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar Content */}
@@ -221,74 +268,74 @@ export default function AdminDashboard() {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle className="text-binance-textPrimary">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <button 
                     onClick={() => router.push('/admin/users')}
-                    className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-binance-primary/10 hover:bg-binance-primary/20 border border-binance-primary/30 hover:border-binance-primary/50 rounded-lg transition-colors"
                   >
                     <div className="flex items-center">
                       <span className="text-2xl mr-3">👥</span>
-                      <span className="font-medium">Manage Users</span>
+                      <span className="font-medium text-binance-textPrimary">Manage Users</span>
                     </div>
-                    <span className="text-blue-600">→</span>
+                    <span className="text-binance-primary">→</span>
                   </button>
 
                   <button 
                     onClick={() => router.push('/admin/transactions')}
-                    className="w-full flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-binance-green/10 hover:bg-binance-green/20 border border-binance-green/30 hover:border-binance-green/50 rounded-lg transition-colors"
                   >
                     <div className="flex items-center">
                       <span className="text-2xl mr-3">💳</span>
-                      <span className="font-medium">Manage Transactions</span>
+                      <span className="font-medium text-binance-textPrimary">Manage Transactions</span>
                     </div>
-                    <span className="text-green-600">→</span>
+                    <span className="text-binance-green">→</span>
                   </button>
 
                   <button 
                     onClick={() => router.push('/admin/notifications')}
-                    className="w-full flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-binance-primary/10 hover:bg-binance-primary/20 border border-binance-primary/30 hover:border-binance-primary/50 rounded-lg transition-colors"
                   >
                     <div className="flex items-center">
                       <span className="text-2xl mr-3">📢</span>
-                      <span className="font-medium">Manage Notifications</span>
+                      <span className="font-medium text-binance-textPrimary">Manage Notifications</span>
                     </div>
-                    <span className="text-purple-600">→</span>
+                    <span className="text-binance-primary">→</span>
                   </button>
 
                   <button 
                     onClick={() => router.push('/admin/wallets')}
-                    className="w-full flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-binance-green/10 hover:bg-binance-green/20 border border-binance-green/30 hover:border-binance-green/50 rounded-lg transition-colors"
                   >
                     <div className="flex items-center">
                       <span className="text-2xl mr-3">💼</span>
-                      <span className="font-medium">View Wallets</span>
+                      <span className="font-medium text-binance-textPrimary">View Wallets</span>
                     </div>
-                    <span className="text-green-600">→</span>
+                    <span className="text-binance-green">→</span>
                   </button>
 
                   <button 
                     onClick={() => router.push('/admin/transactions')}
-                    className="w-full flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-binance-primary/10 hover:bg-binance-primary/20 border border-binance-primary/30 hover:border-binance-primary/50 rounded-lg transition-colors"
                   >
                     <div className="flex items-center">
                       <span className="text-2xl mr-3">📋</span>
-                      <span className="font-medium">View Transactions</span>
+                      <span className="font-medium text-binance-textPrimary">View Transactions</span>
                     </div>
-                    <span className="text-purple-600">→</span>
+                    <span className="text-binance-primary">→</span>
                   </button>
 
                   <button 
                     onClick={() => router.push('/admin/profile')}
-                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-binance-surface/50 hover:bg-binance-surface border border-binance-border hover:border-binance-textSecondary rounded-lg transition-colors"
                   >
                     <div className="flex items-center">
                       <span className="text-2xl mr-3">👤</span>
-                      <span className="font-medium">Admin Profile</span>
+                      <span className="font-medium text-binance-textPrimary">Admin Profile</span>
                     </div>
-                    <span className="text-gray-600">→</span>
+                    <span className="text-binance-textSecondary">→</span>
                   </button>
                 </div>
               </CardContent>
@@ -297,7 +344,7 @@ export default function AdminDashboard() {
             {/* Recent Activity */}
             <Card>
               <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
+                <CardTitle className="text-binance-textPrimary">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -305,13 +352,13 @@ export default function AdminDashboard() {
                     <div key={index} className="flex items-center justify-between p-2">
                       <div className="flex items-center">
                         <div className={`w-2 h-2 rounded-full mr-3 ${
-                          activity.status === 'success' ? 'bg-green-500' :
-                          activity.status === 'info' ? 'bg-blue-500' :
-                          activity.status === 'warning' ? 'bg-yellow-500' : 'bg-gray-500'
+                          activity.status === 'success' ? 'bg-binance-green' :
+                          activity.status === 'info' ? 'bg-binance-primary' :
+                          activity.status === 'warning' ? 'bg-binance-primary' : 'bg-binance-textTertiary'
                         }`}></div>
-                        <span className="text-sm">{activity.message}</span>
+                        <span className="text-sm text-binance-textPrimary">{activity.message}</span>
                       </div>
-                      <span className="text-xs text-gray-500">{activity.time}</span>
+                      <span className="text-xs text-binance-textTertiary">{activity.time}</span>
                     </div>
                   ))}
                 </div>
@@ -319,8 +366,8 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </div>
-      </div>
-    </Layout>
+        </div>
+      </AdminLayout>
     </AdminRoute>
   );
 }

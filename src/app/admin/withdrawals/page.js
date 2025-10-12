@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
-import Layout from '../../../components/Layout';
+import AdminLayout from '../../../components/AdminLayout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
 import { useToast, ToastContainer } from '../../../components/Toast';
@@ -14,14 +14,14 @@ const StatusBadge = ({ status }) => {
     switch (status?.toLowerCase()) {
       case 'approved':
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-binance-green/20 text-binance-green border border-binance-green/30';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-binance-primary/20 text-binance-primary border border-binance-primary/30';
       case 'rejected':
       case 'failed':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-binance-red/20 text-binance-red border border-binance-red/30';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-binance-textTertiary/20 text-binance-textTertiary border border-binance-textTertiary/30';
     }
   };
 
@@ -52,7 +52,7 @@ const StatusBadge = ({ status }) => {
 const UserDetails = ({ user, userId }) => {
   if (!user || !user.name) {
     return (
-      <div className="text-gray-500 text-sm">
+      <div className="text-binance-textTertiary text-sm">
         <div className="font-medium">Unknown User</div>
         <div className="text-xs">ID: {userId}</div>
       </div>
@@ -61,9 +61,9 @@ const UserDetails = ({ user, userId }) => {
 
   return (
     <div className="space-y-1">
-      <div className="font-medium text-gray-900">{user.name}</div>
-      <div className="text-gray-500 text-xs">{user.email}</div>
-      <div className="text-gray-400 text-xs">ID: {userId}</div>
+      <div className="font-medium text-binance-textPrimary">{user.name}</div>
+      <div className="text-binance-textSecondary text-xs">{user.email}</div>
+      <div className="text-binance-textTertiary text-xs">ID: {userId}</div>
     </div>
   );
 };
@@ -90,36 +90,36 @@ const TransactionRow = ({ transaction, onApprove, onReject, isProcessing }) => {
   };
 
   return (
-    <tr className="hover:bg-gray-50 transition-colors duration-150">
-      <td className="px-4 py-3 text-sm text-gray-900">
+    <tr className="hover:bg-binance-surfaceHover transition-colors duration-150">
+      <td className="px-4 py-3 text-sm text-binance-textPrimary">
         {formatDate(transaction.createdAt)}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900">
+      <td className="px-4 py-3 text-sm text-binance-textPrimary">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 text-sm font-medium">
+            <div className="w-8 h-8 bg-binance-primary/20 border border-binance-primary/30 rounded-full flex items-center justify-center">
+              <span className="text-binance-primary text-sm font-medium">
                 {transaction.user?.name ? transaction.user.name.charAt(0).toUpperCase() : 'U'}
               </span>
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-medium text-gray-900 truncate" title={transaction.user?.name || 'Unknown User'}>
+            <div className="font-medium text-binance-textPrimary truncate" title={transaction.user?.name || 'Unknown User'}>
               {transaction.user?.name || 'Unknown User'}
             </div>
-            <div className="text-gray-500 text-xs truncate" title={transaction.user?.email || 'No email available'}>
+            <div className="text-binance-textSecondary text-xs truncate" title={transaction.user?.email || 'No email available'}>
               {transaction.user?.email || 'No email available'}
             </div>
-            <div className="text-gray-400 text-xs">
+            <div className="text-binance-textTertiary text-xs">
               ID: {transaction.userId}
             </div>
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+      <td className="px-4 py-3 text-sm font-medium text-binance-textPrimary">
         {formatAmount(transaction.amount, transaction.currency)}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-500">
+      <td className="px-4 py-3 text-sm text-binance-textSecondary">
         {transaction.binanceAddress ? (
           <div className="max-w-xs truncate" title={transaction.binanceAddress}>
             {transaction.binanceAddress}
@@ -138,7 +138,7 @@ const TransactionRow = ({ transaction, onApprove, onReject, isProcessing }) => {
               size="sm"
               onClick={() => onApprove(transaction.id)}
               disabled={isProcessing}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-binance-green hover:bg-binance-green/80"
             >
               Approve
             </Button>
@@ -147,13 +147,13 @@ const TransactionRow = ({ transaction, onApprove, onReject, isProcessing }) => {
               variant="outline"
               onClick={() => onReject(transaction.id)}
               disabled={isProcessing}
-              className="border-red-300 text-red-700 hover:bg-red-50"
+              className="border-binance-red text-binance-red hover:bg-binance-red/10"
             >
               Reject
             </Button>
           </div>
         ) : (
-          <span className="text-sm text-gray-500">No actions</span>
+          <span className="text-sm text-binance-textTertiary">No actions</span>
         )}
       </td>
     </tr>
@@ -164,24 +164,24 @@ const TransactionRow = ({ transaction, onApprove, onReject, isProcessing }) => {
 const LoadingSkeleton = () => (
   <>
     {[...Array(5)].map((_, i) => (
-      <tr key={i} className="border-b border-gray-200 animate-pulse">
+      <tr key={i} className="border-b border-binance-border animate-pulse">
         <td className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded w-32"></div>
+          <div className="h-4 bg-binance-surface rounded w-32"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded w-24"></div>
+          <div className="h-4 bg-binance-surface rounded w-24"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded w-20"></div>
+          <div className="h-4 bg-binance-surface rounded w-20"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-binance-surface rounded w-16"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+          <div className="h-6 bg-binance-surface rounded-full w-20"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-8 bg-gray-200 rounded w-24"></div>
+          <div className="h-8 bg-binance-surface rounded w-24"></div>
         </td>
       </tr>
     ))}
@@ -350,10 +350,10 @@ export default function AdminWithdrawalsPage() {
 
   if (!mounted || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-binance-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-binance-primary mx-auto mb-4"></div>
+          <p className="text-binance-textSecondary">Loading...</p>
         </div>
       </div>
     );
@@ -361,14 +361,14 @@ export default function AdminWithdrawalsPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-binance-background flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 text-6xl mb-4">🚫</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-4">Please sign in to access this page.</p>
+          <div className="text-binance-red text-6xl mb-4">🚫</div>
+          <h1 className="text-2xl font-bold text-binance-textPrimary mb-2">Access Denied</h1>
+          <p className="text-binance-textSecondary mb-4">Please sign in to access this page.</p>
           <button
             onClick={() => router.push('/auth/signin')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-binance-primary text-binance-background rounded-md hover:bg-binance-primary/80"
           >
             Sign In
           </button>
@@ -378,15 +378,15 @@ export default function AdminWithdrawalsPage() {
   }
 
   return (
-    <Layout showSidebar={true}>
+    <AdminLayout showSidebar={true}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Withdrawal Requests</h1>
-              <p className="text-gray-600 mt-1">Manage user withdrawal requests</p>
-              <p className="text-sm text-green-600 mt-1">✅ Page loaded successfully</p>
+              <h1 className="text-3xl font-bold text-binance-textPrimary">Withdrawal Requests</h1>
+              <p className="text-binance-textSecondary mt-1">Manage user withdrawal requests</p>
+              <p className="text-sm text-binance-green mt-1">✅ Page loaded successfully</p>
             </div>
             <div className="flex space-x-4">
               <Button
@@ -412,12 +412,12 @@ export default function AdminWithdrawalsPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
+                <div className="p-2 bg-binance-primary/20 border border-binance-primary/30 rounded-lg">
                   <span className="text-2xl">⏳</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-binance-textSecondary">Pending</p>
+                  <p className="text-2xl font-bold text-binance-textPrimary">
                     {transactions.filter(t => t.status === 'PENDING').length}
                   </p>
                 </div>
@@ -428,12 +428,12 @@ export default function AdminWithdrawalsPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-red-100 rounded-lg">
+                <div className="p-2 bg-binance-red/20 border border-binance-red/30 rounded-lg">
                   <span className="text-2xl">💸</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Amount</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-binance-textSecondary">Total Amount</p>
+                  <p className="text-2xl font-bold text-binance-textPrimary">
                     ${transactions.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
                   </p>
                 </div>
@@ -444,12 +444,12 @@ export default function AdminWithdrawalsPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
+                <div className="p-2 bg-binance-primary/20 border border-binance-primary/30 rounded-lg">
                   <span className="text-2xl">📊</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Requests</p>
-                  <p className="text-2xl font-bold text-gray-900">{transactions.length}</p>
+                  <p className="text-sm font-medium text-binance-textSecondary">Total Requests</p>
+                  <p className="text-2xl font-bold text-binance-textPrimary">{transactions.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -458,12 +458,12 @@ export default function AdminWithdrawalsPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 bg-binance-green/20 border border-binance-green/30 rounded-lg">
                   <span className="text-2xl">👥</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Unique Users</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-binance-textSecondary">Unique Users</p>
+                  <p className="text-2xl font-bold text-binance-textPrimary">
                     {new Set(transactions.map(t => t.userId)).size}
                   </p>
                 </div>
@@ -482,10 +482,10 @@ export default function AdminWithdrawalsPage() {
                   placeholder="Search by user name, email, or ID..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-binance-border rounded-md focus:outline-none focus:ring-2 focus:ring-binance-primary bg-binance-surface text-binance-textPrimary placeholder-binance-textTertiary"
                 />
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-binance-textSecondary">
                 {filteredTransactions.length} of {transactions.length} requests
               </div>
             </div>
@@ -495,50 +495,50 @@ export default function AdminWithdrawalsPage() {
         {/* Transactions Table */}
         <Card>
           <CardHeader>
-            <CardTitle>
+            <CardTitle className="text-binance-textPrimary">
               Withdrawal Requests ({filteredTransactions.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             {errorState ? (
               <div className="text-center py-8">
-                <div className="text-red-500 text-4xl mb-4">⚠️</div>
-                <p className="text-red-600 mb-4">{errorState}</p>
+                <div className="text-binance-red text-4xl mb-4">⚠️</div>
+                <p className="text-binance-red mb-4">{errorState}</p>
                 <Button onClick={handleRefresh} variant="outline">
                   Try Again
                 </Button>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-binance-border">
+                  <thead className="bg-binance-surface">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                         Date
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                         Amount
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                         Binance Address
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-binance-background divide-y divide-binance-border">
                     {isLoading ? (
                       <LoadingSkeleton />
                     ) : filteredTransactions.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                        <td colSpan="6" className="px-4 py-8 text-center text-binance-textTertiary">
                           {searchTerm ? 'No withdrawal requests match your search' : 'No withdrawal requests found'}
                         </td>
                       </tr>
@@ -562,7 +562,7 @@ export default function AdminWithdrawalsPage() {
         
         {/* Toast Container */}
         <ToastContainer toasts={toasts} removeToast={removeToast} />
-      </div>
-    </Layout>
-  );
-}
+        </div>
+      </AdminLayout>
+    );
+  }

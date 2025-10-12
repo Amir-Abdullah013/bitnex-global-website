@@ -17,17 +17,17 @@ export default function AccessDeniedPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading) {
+    if (mounted && !isLoading) {
       // If user is not authenticated, redirect to admin login
       if (!isAuthenticated) {
         router.push('/admin');
       }
       // If user is authenticated but not admin, redirect to user dashboard
-      else if (isAuthenticated && user?.role !== 'admin') {
+      else if (isAuthenticated && adminUser?.role !== 'admin') {
         router.push('/user/dashboard');
       }
     }
-  }, [mounted, loading, isAuthenticated, user, router]);
+  }, [mounted, isLoading, isAuthenticated, adminUser, router]);
 
   const handleGoToUserDashboard = () => {
     router.push('/user/dashboard');
@@ -121,4 +121,5 @@ export default function AccessDeniedPage() {
     </Layout>
   );
 }
+
 

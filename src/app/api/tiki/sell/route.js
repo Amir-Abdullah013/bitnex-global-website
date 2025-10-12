@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
@@ -11,80 +14,76 @@ export async function POST(request) {
       );
     }
 
-    // Get current price and stats
-    let currentPrice, totalTokens, totalInvestment;
-    
-    try {
-      const { databaseHelpers } = await import('../../../../lib/database.js');
-      const stats = await databaseHelpers.tokenStats.getTokenStats();
-      currentPrice = stats.currentPrice;
-      totalTokens = stats.totalTokens;
-      totalInvestment = stats.totalInvestment;
-    } catch (dbError) {
-      console.warn('Database not available, using fallback values:', dbError.message);
-      currentPrice = 0.0035;
-      totalTokens = 100000000;
-      totalInvestment = 350000;
-    }
+    // Get current Tiki price
+    const latestPrice = await prisma.price.findFirst({
+      where: { symbol: 'TIKI' },
+      orderBy: { timestamp: 'desc' }
+    });
+
+    const currentPrice = latestPrice?.price || 0.0035; // Default Tiki price
 
     // Calculate USD to receive
     const usdToReceive = tokenAmount * currentPrice;
-    
-    // Update token stats (reduce investment by the USD amount)
-    let updatedStats;
-    try {
-      const { databaseHelpers } = await import('../../../../lib/database.js');
-      updatedStats = await databaseHelpers.tokenStats.updateTokenStats(-usdToReceive);
-    } catch (dbError) {
-      console.warn('Database update failed, using fallback calculation:', dbError.message);
-      // Fallback calculation
-      const newTotalInvestment = Math.max(0, totalInvestment - usdToReceive);
-      const newPrice = newTotalInvestment / totalTokens;
-      updatedStats = {
-        currentPrice: newPrice,
-        totalTokens: totalTokens,
-        totalInvestment: newTotalInvestment,
-        lastUpdated: new Date()
-      };
+
+    // Get user's current balance
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      );
     }
 
-    // Create mock transaction record (skip database for testing)
-    const transaction = {
-      id: Date.now().toString(),
-      userId,
-      type: 'SELL',
-      amount: usdToReceive,
-      status: 'COMPLETED',
-      createdAt: new Date()
-    };
+    // Check if user has sufficient Tiki balance
+    if ((user.tikiBalance || 0) < tokenAmount) {
+      return NextResponse.json(
+        { success: false, error: 'Insufficient Tiki balance' },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({
-      success: true,
-      transaction: {
-        id: transaction.id,
-        userId,
-        type: 'SELL',
-        amount: usdToReceive,
-        tokensSold: tokenAmount,
-        pricePerToken: currentPrice,
-        newPrice: updatedStats.currentPrice,
-        status: 'COMPLETED',
-        createdAt: transaction.createdAt || new Date()
-      },
-      priceUpdate: {
-        oldPrice: currentPrice,
-        newPrice: updatedStats.currentPrice,
-        totalInvestment: updatedStats.totalInvestment,
-        totalTokens: updatedStats.totalTokens,
-        lastUpdated: updatedStats.lastUpdated
+    // Update user balances
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        usdBalance: (user.usdBalance || 0) + usdToReceive,
+        tikiBalance: (user.tikiBalance || 0) - tokenAmount
       }
     });
 
+    // Create transaction record
+    await prisma.transaction.create({
+      data: {
+        userId: userId,
+        type: 'SELL',
+        amount: usdToReceive,
+        tokenAmount: tokenAmount,
+        tokenType: 'TIKI',
+        price: currentPrice,
+        status: 'COMPLETED'
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      tokensSold: tokenAmount,
+      usdReceived: usdToReceive,
+      currentPrice: currentPrice,
+      newUsdBalance: updatedUser.usdBalance,
+      newTikiBalance: updatedUser.tikiBalance
+    });
+
   } catch (error) {
-    console.error('Error processing Tiki sell:', error);
+    console.error('Error in Tiki sell API:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to process sell order' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
+

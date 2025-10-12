@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
 import { authHelpers } from '@/lib/supabase';;
-import Layout from '../../../components/Layout';
+import AdminLayout from '../../../components/AdminLayout';
 import ProfileCard from '../../../components/ProfileCard';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
@@ -31,15 +31,15 @@ export default function AdminProfile() {
   }, [authLoading, isAuthenticated, isAdmin, router]);
 
   useEffect(() => {
-    if (user) {
+    if (adminUser) {
       // Merge user data with preferences for phone number
       const userWithPhone = {
-        ...user,
+        ...adminUser,
         phone: adminUser.prefs?.phone || ''
       };
       setUserData(userWithPhone);
     }
-  }, [user]);
+  }, [adminUser]);
 
   const handlePasswordChange = async (currentPassword, newPassword) => {
     setProfileLoading(true);
@@ -55,11 +55,11 @@ export default function AdminProfile() {
 
   if (authLoading || profileLoading) {
     return (
-      <Layout showSidebar={true}>
+      <AdminLayout showSidebar={true}>
         <div className="min-h-screen flex items-center justify-center">
           <Loader />
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
@@ -68,7 +68,7 @@ export default function AdminProfile() {
   }
 
   return (
-    <Layout showSidebar={true}>
+    <AdminLayout showSidebar={true}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -226,7 +226,7 @@ export default function AdminProfile() {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }
 

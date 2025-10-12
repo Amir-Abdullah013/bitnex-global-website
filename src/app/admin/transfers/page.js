@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
-import { useTiki } from '../../../lib/tiki-context';
-import Layout from '../../../components/Layout';
+import { useBitnex } from '../../../lib/bitnex-context';
+import { useTiki, TikiProvider } from '../../../lib/tiki-context';
+import AdminLayout from '../../../components/AdminLayout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
@@ -118,7 +119,7 @@ const LoadingSkeleton = () => (
   </>
 );
 
-export default function AdminTransfersPage() {
+function AdminTransfersPageContent() {
   const { adminUser, isLoading, isAuthenticated } = useAdminAuth();
   const router = useRouter();
   const { success, error, toasts, removeToast } = useToast();
@@ -143,14 +144,14 @@ export default function AdminTransfersPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading) {
+    if (mounted && !isLoading) {
       if (!isAuthenticated) {
         router.push('/auth/signin');
       } else {
         fetchTransfers();
       }
     }
-  }, [mounted, loading, isAuthenticated, router]);
+  }, [mounted, isLoading, isAuthenticated, router]);
 
   const fetchTransfers = async () => {
     setIsDataLoading(true);
@@ -201,16 +202,16 @@ export default function AdminTransfersPage() {
 
   if (!mounted || isLoading) {
     return (
-      <Layout showSidebar={true}>
+      <AdminLayout showSidebar={true}>
         <div className="flex justify-center items-center h-full">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-binance-primary"></div>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
   return (
-    <Layout showSidebar={true}>
+    <AdminLayout showSidebar={true}>
       <div className="container mx-auto p-4">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Transfer Management</h1>
 
@@ -335,6 +336,14 @@ export default function AdminTransfersPage() {
         </Card>
       </div>
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-    </Layout>
+    </AdminLayout>
+  );
+}
+
+export default function AdminTransfersPage() {
+  return (
+    <TikiProvider>
+      <AdminTransfersPageContent />
+    </TikiProvider>
   );
 }

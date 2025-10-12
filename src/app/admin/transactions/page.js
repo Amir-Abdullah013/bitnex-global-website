@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
-import Layout from '../../../components/Layout';
+import AdminLayout from '../../../components/AdminLayout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
@@ -64,7 +64,7 @@ export default function AdminTransactionsPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading) {
+    if (mounted && !isLoading) {
       if (!isAuthenticated) {
         router.push('/auth/signin');
         return;
@@ -73,7 +73,7 @@ export default function AdminTransactionsPage() {
       loadDepositRequests();
       loadWithdrawals();
     }
-  }, [mounted, loading, isAuthenticated]);
+  }, [mounted, isLoading, isAuthenticated]);
 
   // Reload transactions when filters change
   useEffect(() => {
@@ -441,7 +441,7 @@ export default function AdminTransactionsPage() {
   }
 
   return (
-    <Layout showSidebar={true}>
+    <AdminLayout showSidebar={true}>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
@@ -830,7 +830,7 @@ export default function AdminTransactionsPage() {
 
         {/* Toast Container */}
         <ToastContainer toasts={toasts} removeToast={removeToast} />
-      </div>
-    </Layout>
-  );
-}
+        </div>
+      </AdminLayout>
+    );
+  }

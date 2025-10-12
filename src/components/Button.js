@@ -14,24 +14,25 @@ const Button = forwardRef(({
   type = 'button',
   ...props 
 }, ref) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95';
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-binance-background disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm hover:shadow-md',
-    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500 border border-gray-200',
-    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500 bg-white',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm hover:shadow-md',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-sm hover:shadow-md',
-    warning: 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500 shadow-sm hover:shadow-md'
+    primary: 'bg-binance-primary text-binance-background hover:opacity-90 focus:ring-binance-primary/50',
+    secondary: 'bg-binance-surface text-binance-textPrimary hover:bg-binance-surfaceHover focus:ring-binance-border border border-binance-border',
+    outline: 'border border-binance-border text-binance-textPrimary hover:bg-binance-surface focus:ring-binance-border',
+    ghost: 'text-binance-textPrimary hover:bg-binance-surface focus:ring-binance-border',
+    buy: 'bg-binance-green text-white hover:opacity-90 focus:ring-binance-green/50',
+    sell: 'bg-binance-red text-white hover:opacity-90 focus:ring-binance-red/50',
+    danger: 'bg-binance-red text-white hover:opacity-90 focus:ring-binance-red/50',
+    success: 'bg-binance-green text-white hover:opacity-90 focus:ring-binance-green/50'
   };
   
   const sizes = {
-    xs: 'px-2.5 py-1.5 text-xs',
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2.5 text-sm',
-    lg: 'px-6 py-3 text-base',
-    xl: 'px-8 py-4 text-lg'
+    xs: 'px-2 py-1 text-xs',
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-2.5 text-sm',
+    xl: 'px-8 py-3 text-base'
   };
   
   const widthClass = fullWidth ? 'w-full' : '';

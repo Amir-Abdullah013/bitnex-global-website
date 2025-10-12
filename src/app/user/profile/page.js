@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../lib/auth-context';
 import { authHelpers } from '../../../lib/supabase';
@@ -10,7 +10,7 @@ import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Ca
 import Button from '../../../components/Button';
 import Loader from '../../../components/Loader';
 
-export default function UserProfile() {
+function UserProfileContent() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -270,5 +270,22 @@ export default function UserProfile() {
         )}
       </div>
     </Layout>
+  );
+}
+
+export default function UserProfile() {
+  return (
+    <Suspense fallback={
+      <Layout showSidebar={true}>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading profile...</p>
+          </div>
+        </div>
+      </Layout>
+    }>
+      <UserProfileContent />
+    </Suspense>
   );
 }

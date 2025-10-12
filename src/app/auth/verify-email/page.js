@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../../lib/auth-context';
 import { Button, Card, CardContent, AlertModal, Loader } from '../../../components';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const { verifyEmail, loading } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -152,6 +152,21 @@ export default function VerifyEmailPage() {
         buttonText="OK"
       />
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading verification...</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
 

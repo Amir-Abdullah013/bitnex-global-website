@@ -149,27 +149,33 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-binance-background flex flex-col justify-center py-12 sm:px-6 lg:px-8" style={{backgroundColor: '#1E2329'}}>
+      {/* Header with Logo */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-500">
-            create a new account
+        <div className="flex justify-center mb-6">
+          <Link href="/" className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-binance-primary rounded-xl flex items-center justify-center" style={{backgroundColor: '#F0B90B'}}>
+              <span className="text-binance-background font-bold text-xl" style={{color: '#1E2329'}}>B</span>
+            </div>
+            <span className="text-2xl font-bold text-binance-textPrimary" style={{color: '#EAECEF'}}>Bitnex Global</span>
           </Link>
+        </div>
+        <h2 className="text-center text-3xl font-bold text-binance-textPrimary" style={{color: '#EAECEF'}}>
+          Welcome Back
+        </h2>
+        <p className="mt-2 text-center text-sm text-binance-textSecondary" style={{color: '#B7BDC6'}}>
+          Sign in to your account to continue trading
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-binance-surface py-8 px-6 shadow-xl rounded-2xl border border-binance-border" style={{backgroundColor: '#2B3139', borderColor: '#3C4043'}}>
           <form className="space-y-6" onSubmit={handleSubmit}>
             {errors.general && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+              <div className="bg-binance-red/10 border border-binance-red/30 text-binance-red px-4 py-3 rounded-lg" style={{backgroundColor: 'rgba(246, 70, 93, 0.1)', borderColor: 'rgba(246, 70, 93, 0.3)', color: '#F6465D'}}>
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <svg className="h-5 w-5 text-binance-red" viewBox="0 0 20 20" fill="currentColor" style={{color: '#F6465D'}}>
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
                   </div>
@@ -179,7 +185,8 @@ export default function SignIn() {
                       <div className="mt-2">
                         <Link 
                           href="/auth/signup" 
-                          className="text-sm font-medium text-blue-600 hover:text-blue-500 underline"
+                          className="text-sm font-medium text-binance-primary hover:text-binance-primary/80 underline"
+                          style={{color: '#F0B90B'}}
                         >
                           Create Account Now →
                         </Link>
@@ -189,7 +196,8 @@ export default function SignIn() {
                       <div className="mt-2">
                         <Link 
                           href="/auth/forgot-password" 
-                          className="text-sm font-medium text-blue-600 hover:text-blue-500 underline"
+                          className="text-sm font-medium text-binance-primary hover:text-binance-primary/80 underline"
+                          style={{color: '#F0B90B'}}
                         >
                           Forgot Password? →
                         </Link>
@@ -201,7 +209,7 @@ export default function SignIn() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-binance-textSecondary mb-2" style={{color: '#B7BDC6'}}>
                 Email address
               </label>
               <div className="mt-1">
@@ -213,19 +221,24 @@ export default function SignIn() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    errors.email ? 'border-red-300' : 'border-gray-300'
+                  className={`appearance-none block w-full px-4 py-3 border rounded-lg shadow-sm placeholder-binance-textTertiary focus:outline-none focus:ring-2 focus:ring-binance-primary focus:border-binance-primary sm:text-sm bg-binance-background text-binance-textPrimary ${
+                    errors.email ? 'border-binance-red' : 'border-binance-border'
                   }`}
+                  style={{
+                    backgroundColor: '#1E2329',
+                    color: '#EAECEF',
+                    borderColor: errors.email ? '#F6465D' : '#3C4043'
+                  }}
                   placeholder="Enter your email"
                 />
                 {errors.email && (
-                  <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                  <p className="mt-2 text-sm text-binance-red" style={{color: '#F6465D'}}>{errors.email}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-binance-textSecondary mb-2" style={{color: '#B7BDC6'}}>
                 Password
               </label>
               <div className="mt-1">
@@ -237,13 +250,18 @@ export default function SignIn() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
+                  className={`appearance-none block w-full px-4 py-3 border rounded-lg shadow-sm placeholder-binance-textTertiary focus:outline-none focus:ring-2 focus:ring-binance-primary focus:border-binance-primary sm:text-sm bg-binance-background text-binance-textPrimary ${
+                    errors.password ? 'border-binance-red' : 'border-binance-border'
                   }`}
+                  style={{
+                    backgroundColor: '#1E2329',
+                    color: '#EAECEF',
+                    borderColor: errors.password ? '#F6465D' : '#3C4043'
+                  }}
                   placeholder="Enter your password"
                 />
                 {errors.password && (
-                  <p className="mt-2 text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-2 text-sm text-binance-red" style={{color: '#F6465D'}}>{errors.password}</p>
                 )}
               </div>
             </div>
@@ -254,15 +272,16 @@ export default function SignIn() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-binance-primary focus:ring-binance-primary border-binance-border rounded"
+                  style={{color: '#F0B90B', borderColor: '#3C4043'}}
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-binance-textSecondary" style={{color: '#B7BDC6'}}>
                   Remember me
                 </label>
               </div>
 
               <div className="text-sm">
-                <Link href="/auth/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href="/auth/forgot-password" className="font-medium text-binance-primary hover:text-binance-primary/80" style={{color: '#F0B90B'}}>
                   Forgot your password?
                 </Link>
               </div>
@@ -272,19 +291,25 @@ export default function SignIn() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-binance-background bg-binance-primary hover:bg-binance-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-binance-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                style={{backgroundColor: '#F0B90B', color: '#1E2329'}}
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-binance-background mr-2" style={{borderColor: '#1E2329'}}></div>
+                    Signing in...
+                  </div>
+                ) : 'Sign in'}
               </button>
             </div>
 
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t border-binance-border" style={{borderColor: '#3C4043'}} />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-3 bg-binance-surface text-binance-textTertiary" style={{backgroundColor: '#2B3139', color: '#848E9C'}}>Or continue with</span>
                 </div>
               </div>
 
@@ -293,11 +318,12 @@ export default function SignIn() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading}
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full inline-flex justify-center py-3 px-4 border border-binance-border rounded-lg shadow-sm bg-binance-background text-sm font-medium text-binance-textSecondary hover:bg-binance-surface disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  style={{borderColor: '#3C4043', backgroundColor: '#1E2329', color: '#B7BDC6'}}
                 >
                   {isGoogleLoading ? (
                     <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-binance-textSecondary mr-2" style={{borderColor: '#B7BDC6'}}></div>
                       Connecting...
                     </div>
                   ) : (
@@ -329,21 +355,21 @@ export default function SignIn() {
           </form>
 
           {/* Helpful message for new users */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+          <div className="mt-6 p-4 bg-binance-primary/10 border border-binance-primary/30 rounded-lg" style={{backgroundColor: 'rgba(240, 185, 11, 0.1)', borderColor: 'rgba(240, 185, 11, 0.3)'}}>
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-binance-primary" viewBox="0 0 20 20" fill="currentColor" style={{color: '#F0B90B'}}>
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">
-                  New to Token Website?
+                <h3 className="text-sm font-medium text-binance-textPrimary" style={{color: '#EAECEF'}}>
+                  New to Bitnex Global?
                 </h3>
-                <div className="mt-2 text-sm text-blue-700">
+                <div className="mt-2 text-sm text-binance-textSecondary" style={{color: '#B7BDC6'}}>
                   <p>
                     If you don't have an account yet, you can create one in just a few minutes.
-                    <Link href="/auth/signup" className="font-medium underline hover:text-blue-600">
+                    <Link href="/auth/signup" className="font-medium underline hover:text-binance-primary" style={{color: '#F0B90B'}}>
                       {' '}Create your account now →
                     </Link>
                   </p>
@@ -352,6 +378,16 @@ export default function SignIn() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 text-center">
+        <p className="text-sm text-binance-textTertiary" style={{color: '#848E9C'}}>
+          Don't have an account?{' '}
+          <Link href="/auth/signup" className="font-medium text-binance-primary hover:text-binance-primary/80" style={{color: '#F0B90B'}}>
+            Sign up for free
+          </Link>
+        </p>
       </div>
     </div>
   );

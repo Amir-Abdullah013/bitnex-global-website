@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import Card, { CardContent, CardHeader, CardTitle } from './Card';
 import Button from './Button';
-import { useTiki } from '../lib/tiki-context';
+import { useBitnex } from '../lib/bitnex-context';
 
 // Time filter options
 const TIME_FILTERS = [
@@ -24,8 +24,8 @@ const TIME_FILTERS = [
   { label: '30D', value: '30d', hours: 720 }
 ];
 
-// Generate Tiki price data based on current price
-const generateTikiData = (timeFilter, currentPrice) => {
+// Generate BNX price data based on current price
+const generateBnxData = (timeFilter, currentPrice) => {
   const now = new Date();
   const data = [];
   const points = 50; // Number of data points
@@ -65,8 +65,8 @@ const generateTikiData = (timeFilter, currentPrice) => {
   for (let i = 0; i < points; i++) {
     const timestamp = new Date(startTime.getTime() + (i * interval));
     
-    // Generate realistic price movement with smaller volatility for Tiki
-    const volatility = 0.01; // 1% volatility for Tiki
+    // Generate realistic price movement with smaller volatility for BNX
+    const volatility = 0.01; // 1% volatility for BNX
     const change = (Math.random() - 0.5) * volatility;
     basePrice = basePrice * (1 + change);
     
@@ -77,7 +77,7 @@ const generateTikiData = (timeFilter, currentPrice) => {
     
     data.push({
       timestamp: timestamp.toISOString(),
-      price: parseFloat(basePrice.toFixed(4)), // More precision for Tiki
+      price: parseFloat(basePrice.toFixed(4)), // More precision for BNX
       volume: Math.floor(Math.random() * 10000000) + 1000000, // Higher volume for crypto
       time: timestamp.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
@@ -99,8 +99,8 @@ const generateTikiData = (timeFilter, currentPrice) => {
   return data;
 };
 
-// Custom tooltip component for Tiki
-const TikiTooltip = ({ active, payload, label }) => {
+// Custom tooltip component for BNX
+const BnxTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -112,7 +112,7 @@ const TikiTooltip = ({ active, payload, label }) => {
           ${data.price.toFixed(4)}
         </p>
         <p className="text-xs text-gray-500">
-          Volume: {data.volume.toLocaleString()} TIKI
+          Volume: {data.volume.toLocaleString()} BNX
         </p>
       </div>
     );
@@ -127,21 +127,21 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const TikiPriceChart = ({ className = '' }) => {
-  const { tikiPrice, formatCurrency } = useTiki();
+const BnxPriceChart = ({ className = '' }) => {
+  const { bnxPrice, formatCurrency } = useBitnex();
   const [selectedFilter, setSelectedFilter] = useState('1d');
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPrice, setCurrentPrice] = useState(tikiPrice);
+  const [currentPrice, setCurrentPrice] = useState(bnxPrice);
   const [priceChange, setPriceChange] = useState(0);
 
-  // Generate data when filter changes or Tiki price changes
+  // Generate data when filter changes or BNX price changes
   useEffect(() => {
     setIsLoading(true);
     
     // Simulate API delay
     setTimeout(() => {
-      const data = generateTikiData(selectedFilter, tikiPrice);
+      const data = generateBnxData(selectedFilter, bnxPrice);
       setChartData(data);
       
       if (data.length > 0) {
@@ -153,7 +153,7 @@ const TikiPriceChart = ({ className = '' }) => {
       
       setIsLoading(false);
     }, 500);
-  }, [selectedFilter, tikiPrice]);
+  }, [selectedFilter, bnxPrice]);
 
   // Handle filter change
   const handleFilterChange = (filter) => {
@@ -175,7 +175,7 @@ const TikiPriceChart = ({ className = '' }) => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Tiki Price Chart</CardTitle>
+            <CardTitle className="text-lg font-semibold">BNX Price Chart</CardTitle>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Time Range:</span>
               <div className="flex space-x-1">
@@ -203,7 +203,7 @@ const TikiPriceChart = ({ className = '' }) => {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Current Tiki Price</p>
+                <p className="text-sm text-gray-600">Current BNX Price</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {formatCurrency(currentPrice, 'USD')}
                 </p>
@@ -249,7 +249,7 @@ const TikiPriceChart = ({ className = '' }) => {
                     axisLine={false}
                     tickFormatter={(value) => `$${value.toFixed(4)}`}
                   />
-                  <Tooltip content={<TikiTooltip />} />
+                  <Tooltip content={<BnxTooltip />} />
                   <Line
                     type="monotone"
                     dataKey="price"
@@ -274,7 +274,7 @@ const TikiPriceChart = ({ className = '' }) => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                <span>Tiki Price</span>
+                <span>BNX Price</span>
               </div>
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-2" style={{ opacity: 0.5 }}></div>
@@ -291,7 +291,8 @@ const TikiPriceChart = ({ className = '' }) => {
   );
 };
 
-export default TikiPriceChart;
+export default BnxPriceChart;
+
 
 
 

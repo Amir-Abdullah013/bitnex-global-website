@@ -1,104 +1,71 @@
 import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-export async function GET() {
+const prisma = new PrismaClient();
+
+/**
+ * GET /api/tiki/price - Get current Tiki price data
+ */
+export async function GET(request) {
   try {
-    // Try to get price from database
-    try {
-      const { databaseHelpers } = await import('../../../../lib/database.js');
-      const currentPrice = await databaseHelpers.tokenStats.getCurrentPrice();
-      const stats = await databaseHelpers.tokenStats.getTokenStats();
+    const { searchParams } = new URL(request.url);
+    const symbol = searchParams.get('symbol') || 'TIKI';
+
+    // Get the latest price from the database
+    const latestPrice = await prisma.price.findFirst({
+      where: { symbol },
+      orderBy: { timestamp: 'desc' }
+    });
+
+    if (latestPrice) {
+      // Calculate 24h change
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
       
-      return NextResponse.json({
-        success: true,
-        price: currentPrice,
-        totalTokens: stats.totalTokens,
-        totalInvestment: stats.totalInvestment,
-        lastUpdated: stats.lastUpdated,
-        source: 'database'
+      const yesterdayPrice = await prisma.price.findFirst({
+        where: {
+          symbol,
+          timestamp: { gte: yesterday }
+        },
+        orderBy: { timestamp: 'asc' }
       });
-    } catch (dbError) {
-      console.warn('Database not available, using fallback price:', dbError.message);
-      
-      // Fallback to default price
-      const fallbackPrice = 0.0035; // Initial price
-      
+
+      const change24h = yesterdayPrice 
+        ? ((latestPrice.price - yesterdayPrice.price) / yesterdayPrice.price) * 100
+        : 0;
+
       return NextResponse.json({
         success: true,
-        price: fallbackPrice,
-        totalTokens: 100000000,
-        totalInvestment: 350000,
-        lastUpdated: new Date().toISOString(),
-        source: 'fallback'
+        price: latestPrice.price,
+        change24h,
+        volume24h: latestPrice.volume || 0,
+        high24h: latestPrice.price, // Simplified - in real implementation, calculate from 24h data
+        low24h: latestPrice.price,
+        marketCap: latestPrice.marketCap,
+        timestamp: latestPrice.timestamp
       });
     }
-  } catch (error) {
-    console.error('Error fetching Tiki price:', error);
-    
-    // Always return a successful response with fallback data
+
+    // Return default values if no price data found
     return NextResponse.json({
       success: true,
-      price: 0.0035,
-      totalTokens: 100000000,
-      totalInvestment: 350000,
-      lastUpdated: new Date().toISOString(),
-      source: 'fallback',
-      error: 'Using fallback price due to server error'
+      price: 0.0035, // Default Tiki price
+      change24h: 0,
+      volume24h: 0,
+      high24h: 0.0035,
+      low24h: 0.0035,
+      marketCap: null,
+      timestamp: new Date().toISOString()
     });
-  }
-}
 
-export async function POST(request) {
-  try {
-    const { investmentChange } = await request.json();
-    
-    if (typeof investmentChange !== 'number') {
-      return NextResponse.json(
-        { success: false, error: 'Invalid investment change value' },
-        { status: 400 }
-      );
-    }
-
-    // Try to update price in database
-    try {
-      const { databaseHelpers } = await import('../../../../lib/database.js');
-      const updatedStats = await databaseHelpers.tokenStats.updateTokenStats(investmentChange);
-      
-      return NextResponse.json({
-        success: true,
-        price: updatedStats.currentPrice,
-        totalTokens: updatedStats.totalTokens,
-        totalInvestment: updatedStats.totalInvestment,
-        lastUpdated: updatedStats.lastUpdated,
-        source: 'database'
-      });
-    } catch (dbError) {
-      console.warn('Database not available for price update:', dbError.message);
-      
-      // Fallback: calculate price locally
-      const currentInvestment = 350000; // Default initial investment
-      const totalTokens = 100000000;
-      const newInvestment = currentInvestment + investmentChange;
-      const newPrice = newInvestment / totalTokens;
-      
-      return NextResponse.json({
-        success: true,
-        price: newPrice,
-        totalTokens: totalTokens,
-        totalInvestment: newInvestment,
-        lastUpdated: new Date().toISOString(),
-        source: 'fallback'
-      });
-    }
   } catch (error) {
-    console.error('Error updating Tiki price:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update price' },
-      { status: 500 }
-    );
+    console.error('Error fetching Tiki price:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to fetch Tiki price data'
+    }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }
-
-
-
-
 

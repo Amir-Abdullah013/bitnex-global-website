@@ -2,7 +2,6 @@
 const nextConfig = {
   // Performance optimizations
   experimental: {
-    optimizeCss: true,
     optimizePackageImports: ['@/components', '@/lib'],
   },
   
@@ -57,7 +56,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cloud.appwrite.io https://fra.cloud.appwrite.io; frame-src 'self' https://accounts.google.com https://accounts.youtube.com;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cloud.appwrite.io https://fra.cloud.appwrite.io wss://stream.binance.com:9443 wss://stream.binance.com wss://data-stream.binance.vision https://api.binance.com https://api1.binance.com https://api2.binance.com https://api3.binance.com; frame-src 'self' https://accounts.google.com https://accounts.youtube.com;",
           },
         ],
       },

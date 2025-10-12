@@ -1,6 +1,9 @@
 import { getServerSession, getUserRole } from '../../lib/session';
 import { redirect } from 'next/navigation';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default async function TestProtectionPage() {
   const user = await getServerSession();
   const role = await getUserRole(user);
@@ -41,6 +44,7 @@ export default async function TestProtectionPage() {
     </div>
   );
 }
+
 
 
 

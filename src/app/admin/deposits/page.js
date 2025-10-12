@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
 // Removed direct database import - using API calls instead;
-import Layout from '../../../components/Layout';
+import AdminLayout from '../../../components/AdminLayout';
 import AdminRoute from '../../../components/AdminRoute';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
@@ -16,14 +16,14 @@ const StatusBadge = ({ status }) => {
     switch (status) {
       case 'APPROVED':
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-binance-green/20 text-binance-green border border-binance-green/30';
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-binance-primary/20 text-binance-primary border border-binance-primary/30';
       case 'REJECTED':
       case 'FAILED':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-binance-red/20 text-binance-red border border-binance-red/30';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-binance-textTertiary/20 text-binance-textTertiary border border-binance-textTertiary/30';
     }
   };
 
@@ -72,52 +72,52 @@ const TransactionRow = ({ transaction, onApprove, onReject, isProcessing }) => {
   };
 
   return (
-    <tr className="hover:bg-gray-50 transition-colors duration-150">
-      <td className="px-4 py-3 text-sm text-gray-900">
+    <tr className="hover:bg-binance-surfaceHover transition-colors duration-150">
+      <td className="px-4 py-3 text-sm text-binance-textPrimary">
         {formatDate(transaction.createdAt)}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900">
+      <td className="px-4 py-3 text-sm text-binance-textPrimary">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 text-sm font-medium">
+            <div className="w-8 h-8 bg-binance-primary/20 border border-binance-primary/30 rounded-full flex items-center justify-center">
+              <span className="text-binance-primary text-sm font-medium">
                 {transaction.user_name ? transaction.user_name.charAt(0).toUpperCase() : 'U'}
               </span>
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-medium text-gray-900 truncate" title={transaction.user_name || 'Unknown User'}>
+            <div className="font-medium text-binance-textPrimary truncate" title={transaction.user_name || 'Unknown User'}>
               {transaction.user_name || 'Unknown User'}
             </div>
-            <div className="text-gray-500 text-xs truncate" title={transaction.user_email || 'No email available'}>
+            <div className="text-binance-textSecondary text-xs truncate" title={transaction.user_email || 'No email available'}>
               {transaction.user_email || 'No email available'}
             </div>
-            <div className="text-gray-400 text-xs">
+            <div className="text-binance-textTertiary text-xs">
               ID: {transaction.userId}
             </div>
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+      <td className="px-4 py-3 text-sm font-medium text-binance-textPrimary">
         {formatAmount(transaction.amount)}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-500">
+      <td className="px-4 py-3 text-sm text-binance-textSecondary">
         {transaction.screenshot ? (
           <div className="flex items-center space-x-2">
             <img
               src={transaction.screenshot}
               alt="Transaction Screenshot"
-              className="w-12 h-12 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-12 h-12 object-cover rounded border border-binance-border cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => window.open(transaction.screenshot, '_blank')}
               title="Click to view full size"
             />
-            <span className="text-xs text-gray-500">Click to view</span>
+            <span className="text-xs text-binance-textSecondary">Click to view</span>
           </div>
         ) : (
-          <span className="text-gray-400 text-xs">No screenshot</span>
+          <span className="text-binance-textTertiary text-xs">No screenshot</span>
         )}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-500">
+      <td className="px-4 py-3 text-sm text-binance-textSecondary">
         {transaction.gateway || 'N/A'}
       </td>
       <td className="px-4 py-3">
@@ -130,7 +130,7 @@ const TransactionRow = ({ transaction, onApprove, onReject, isProcessing }) => {
               size="sm"
               onClick={() => onApprove(transaction.id)}
               disabled={isProcessing}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-binance-green hover:bg-binance-green/80"
             >
               Approve
             </Button>
@@ -139,13 +139,13 @@ const TransactionRow = ({ transaction, onApprove, onReject, isProcessing }) => {
               variant="outline"
               onClick={() => onReject(transaction.id)}
               disabled={isProcessing}
-              className="border-red-300 text-red-700 hover:bg-red-50"
+              className="border-binance-red text-binance-red hover:bg-binance-red/10"
             >
               Reject
             </Button>
           </div>
         ) : (
-          <span className="text-sm text-gray-500">No actions</span>
+          <span className="text-sm text-binance-textTertiary">No actions</span>
         )}
       </td>
     </tr>
@@ -156,27 +156,27 @@ const TransactionRow = ({ transaction, onApprove, onReject, isProcessing }) => {
 const LoadingSkeleton = () => (
   <>
     {[...Array(5)].map((_, i) => (
-      <tr key={i} className="border-b border-gray-200 animate-pulse">
+      <tr key={i} className="border-b border-binance-border animate-pulse">
         <td className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded w-32"></div>
+          <div className="h-4 bg-binance-surface rounded w-32"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded w-24"></div>
+          <div className="h-4 bg-binance-surface rounded w-24"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded w-20"></div>
+          <div className="h-4 bg-binance-surface rounded w-20"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-12 bg-gray-200 rounded w-12"></div>
+          <div className="h-12 bg-binance-surface rounded w-12"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-binance-surface rounded w-16"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+          <div className="h-6 bg-binance-surface rounded-full w-20"></div>
         </td>
         <td className="px-4 py-3">
-          <div className="h-8 bg-gray-200 rounded w-24"></div>
+          <div className="h-8 bg-binance-surface rounded w-24"></div>
         </td>
       </tr>
     ))}
@@ -354,14 +354,14 @@ export default function AdminDepositsPage() {
 
   return (
     <AdminRoute>
-      <Layout showSidebar={true}>
+      <AdminLayout showSidebar={true}>
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Deposit Requests</h1>
-                <p className="text-gray-600 mt-1">Manage user deposit requests</p>
+                <h1 className="text-3xl font-bold text-binance-textPrimary">Deposit Requests</h1>
+                <p className="text-binance-textSecondary mt-1">Manage user deposit requests</p>
               </div>
               <div className="flex space-x-4">
                 <Button
@@ -387,12 +387,12 @@ export default function AdminDepositsPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
+                  <div className="p-2 bg-binance-primary/20 border border-binance-primary/30 rounded-lg">
                     <span className="text-2xl">⏳</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Pending</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-binance-textSecondary">Pending</p>
+                    <p className="text-2xl font-bold text-binance-textPrimary">
                       {filteredTransactions.filter(t => t.status === 'PENDING').length}
                     </p>
                   </div>
@@ -403,12 +403,12 @@ export default function AdminDepositsPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
+                  <div className="p-2 bg-binance-green/20 border border-binance-green/30 rounded-lg">
                     <span className="text-2xl">✅</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Amount</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-binance-textSecondary">Total Amount</p>
+                    <p className="text-2xl font-bold text-binance-textPrimary">
                       ${filteredTransactions.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
                     </p>
                   </div>
@@ -419,12 +419,12 @@ export default function AdminDepositsPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-lg">
+                  <div className="p-2 bg-binance-primary/20 border border-binance-primary/30 rounded-lg">
                     <span className="text-2xl">📊</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Requests</p>
-                    <p className="text-2xl font-bold text-gray-900">{filteredTransactions.length}</p>
+                    <p className="text-sm font-medium text-binance-textSecondary">Total Requests</p>
+                    <p className="text-2xl font-bold text-binance-textPrimary">{filteredTransactions.length}</p>
                   </div>
                 </div>
               </CardContent>
@@ -439,7 +439,7 @@ export default function AdminDepositsPage() {
                 placeholder="Search by user name, email, or ID..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-binance-border rounded-md focus:outline-none focus:ring-2 focus:ring-binance-primary bg-binance-surface text-binance-textPrimary placeholder-binance-textTertiary"
               />
             </div>
           </div>
@@ -447,53 +447,53 @@ export default function AdminDepositsPage() {
           {/* Transactions Table */}
           <Card>
             <CardHeader>
-              <CardTitle>
+              <CardTitle className="text-binance-textPrimary">
                 Deposit Requests ({filteredTransactions.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {errorState ? (
                 <div className="text-center py-8">
-                  <div className="text-red-500 text-4xl mb-4">⚠️</div>
-                  <p className="text-red-600 mb-4">{errorState}</p>
+                  <div className="text-binance-red text-4xl mb-4">⚠️</div>
+                  <p className="text-binance-red mb-4">{errorState}</p>
                   <Button onClick={handleRefresh} variant="outline">
                     Try Again
                   </Button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-binance-border">
+                    <thead className="bg-binance-surface">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                           Date
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                           User
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                           Amount
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                           Screenshot
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                           Gateway
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-binance-textSecondary uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-binance-background divide-y divide-binance-border">
                       {isLoading ? (
                         <LoadingSkeleton />
                       ) : filteredTransactions.length === 0 ? (
                         <tr>
-                          <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+                          <td colSpan="7" className="px-4 py-8 text-center text-binance-textTertiary">
                             No pending deposits found
                           </td>
                         </tr>
@@ -518,7 +518,7 @@ export default function AdminDepositsPage() {
           {/* Toast Container */}
           <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
-      </Layout>
+      </AdminLayout>
     </AdminRoute>
   );
 }

@@ -3,11 +3,11 @@ import { databaseHelpers } from '../../../../lib/database';
 
 export async function POST(request) {
   try {
-    const { userId, usdBalance, tikiBalance } = await request.json();
+    const { userId, usdBalance, bnxBalance } = await request.json();
     
-    if (!userId || usdBalance === undefined || tikiBalance === undefined) {
+    if (!userId || usdBalance === undefined || bnxBalance === undefined) {
       return NextResponse.json(
-        { success: false, error: 'User ID, USD balance, and TIKI balance are required' },
+        { success: false, error: 'User ID, USD balance, and BNX balance are required' },
         { status: 400 }
       );
     }
@@ -16,7 +16,7 @@ export async function POST(request) {
     const updatedWallet = await databaseHelpers.wallet.updateBothBalances(
       userId, 
       usdBalance, 
-      tikiBalance
+      bnxBalance
     );
 
     return NextResponse.json({

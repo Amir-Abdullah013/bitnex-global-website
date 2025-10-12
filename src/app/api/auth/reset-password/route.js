@@ -1,35 +1,25 @@
+/**
+ * Reset Password with Token
+ * POST /api/auth/reset-password
+ */
+
 import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
-    const { email, otp, newPassword } = await request.json();
+    const { email, token, newPassword } = await request.json();
 
-    // Validate input
-    if (!email || !otp || !newPassword) {
+    if (!email || !token || !newPassword) {
       return NextResponse.json(
-        { success: false, error: 'Email, OTP, and new password are required' },
+        { success: false, error: 'Email, token, and new password are required' },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, error: 'Please enter a valid email address' },
-        { status: 400 }
-      );
-    }
-
-    // Validate OTP format
-    if (!isValidOTP(otp)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid OTP format. OTP must be 6 digits.' },
-        { status: 400 }
-      );
-    }
-
-    // Validate password strength
     if (newPassword.length < 8) {
       return NextResponse.json(
         { success: false, error: 'Password must be at least 8 characters long' },
@@ -37,81 +27,72 @@ export async function POST(request) {
       );
     }
 
-    // Dynamic imports to avoid build-time issues
-    const bcrypt = (await import('bcryptjs')).default;
-    const { databaseHelpers } = await import('../../../../lib/database.js');
-    const { verifyOTP, isOTPExpired, isValidOTP } = await import('../../../../lib/otp-utils-simple.js');
+    // Find reset token
+    const resetRecord = await prisma.passwordReset.findUnique({
+      where: { email: email.toLowerCase() }
+    });
 
-    // Check if user exists
-    const user = await databaseHelpers.user.getUserByEmail(email);
-    
-    if (!user) {
+    if (!resetRecord) {
       return NextResponse.json(
-        { success: false, error: 'Email not registered' },
+        { success: false, error: 'Invalid reset token' },
+        { status: 404 }
+      );
+    }
+
+    // Check if token is expired
+    if (new Date() > resetRecord.expiresAt) {
+      await prisma.passwordReset.delete({
+        where: { email: email.toLowerCase() }
+      });
+      return NextResponse.json(
+        { success: false, error: 'Reset token has expired. Please request a new password reset.' },
         { status: 400 }
       );
     }
 
-    // Get the most recent password reset record for this email
-    const passwordReset = await databaseHelpers.passwordReset.getPasswordResetByEmail(email);
-    
-    if (!passwordReset) {
+    // Check if token is already used
+    if (resetRecord.used) {
       return NextResponse.json(
-        { success: false, error: 'No valid OTP found for this email. Please request a new OTP.' },
+        { success: false, error: 'Reset token has already been used' },
         { status: 400 }
       );
     }
 
-    // Check if OTP is expired
-    if (isOTPExpired(passwordReset.expiry)) {
+    // Verify token
+    if (resetRecord.token !== token) {
       return NextResponse.json(
-        { success: false, error: 'OTP has expired. Please request a new OTP.' },
+        { success: false, error: 'Invalid reset token' },
         { status: 400 }
       );
     }
 
-    // Verify OTP
-    const isOtpValid = await verifyOTP(otp, passwordReset.hashedOtp);
-    
-    if (!isOtpValid) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid OTP. Please check and try again.' },
-        { status: 400 }
-      );
-    }
-
-    // Hash the new password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     // Update user password
-    const updatedUser = await databaseHelpers.user.updatePassword(user.id, hashedPassword);
+    await prisma.user.update({
+      where: { email: email.toLowerCase() },
+      data: { 
+        password: hashedPassword,
+        updatedAt: new Date()
+      }
+    });
 
-    // Mark password reset as used
-    await databaseHelpers.passwordReset.markPasswordResetAsUsed(passwordReset.id);
-
-    console.log(`Password reset successful for user: ${email}`);
+    // Mark token as used
+    await prisma.passwordReset.update({
+      where: { email: email.toLowerCase() },
+      data: { used: true }
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Password reset successfully. You can now sign in with your new password.'
+      message: 'Password reset successfully'
     });
 
   } catch (error) {
-    console.error('Reset password error:', error);
-    
-    // Handle specific database connection errors
-    if (error.message.includes('Can\'t reach database server') || 
-        error.message.includes('Connection refused') ||
-        error.message.includes('timeout')) {
-      return NextResponse.json(
-        { success: false, error: 'Database connection failed. Please try again later.' },
-        { status: 503 }
-      );
-    }
-    
+    console.error('Error resetting password:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to reset password. Please try again.' },
+      { success: false, error: 'Failed to reset password' },
       { status: 500 }
     );
   }

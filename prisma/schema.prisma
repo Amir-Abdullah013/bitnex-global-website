@@ -48,11 +48,17 @@ model User {
   notifications  Notification[]
   createdNotifications Notification[] @relation("NotificationCreator")
   supportTickets SupportTicket[]
+  auditLogs      AuditLog[]
   adminLogs      AdminLog[]
   depositRequests DepositRequest[]
   stakings       Staking[]
   sentTransfers     Transfer[] @relation("SentTransfers")
   receivedTransfers Transfer[] @relation("ReceivedTransfers")
+  orders         Order[]
+  trades         Trade[] @relation("BuyerTrades")
+  sellTrades     Trade[] @relation("SellerTrades")
+  portfolio      Portfolio?
+  investments    Investment[]
 
   @@map("users")
 }
@@ -61,7 +67,7 @@ model Wallet {
   id         String   @id @default(cuid())
   userId     String   @unique
   balance    Float    @default(0)        // USD balance
-  tikiBalance Float   @default(0)        // TIKI token balance
+  bnxBalance Float   @default(0)        // BNX token balance
   currency   String   @default("USD")
   lastUpdated DateTime @default(now())
   createdAt  DateTime @default(now())
@@ -145,13 +151,17 @@ model AdminLog {
 }
 
 model Price {
-  id        String   @id @default(cuid())
-  symbol    String
-  price     Float
-  volume    Float?
-  marketCap Float?
-  timestamp DateTime @default(now())
-  source    String?
+  id            String   @id @default(cuid())
+  tradingPairId String?
+  symbol        String
+  price         Float
+  volume        Float?
+  marketCap     Float?
+  timestamp     DateTime @default(now())
+  source        String?
+
+  // Relations
+  tradingPair TradingPair? @relation(fields: [tradingPairId], references: [id], onDelete: SetNull)
 
   @@map("prices")
 }
@@ -186,9 +196,9 @@ model DepositRequest {
 
 model PasswordReset {
   id        String   @id @default(cuid())
-  email     String
-  hashedOtp String
-  expiry    DateTime
+  email     String   @unique
+  token     String
+  expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -198,7 +208,7 @@ model PasswordReset {
 
 model TokenStats {
   id               String   @id @default(cuid())
-  totalTokens      Float    @default(100000000) // 100M TIKI tokens
+  totalTokens      Float    @default(100000000) // 100M BNX tokens
   totalInvestment  Float    @default(350000)     // Initial investment: 350,000 USD
   currentPrice     Float    @default(0.0035)    // Initial price: 0.0035 USD
   lastUpdated      DateTime @default(now())
@@ -296,4 +306,294 @@ enum TransferStatus {
   FAILED
   CANCELLED
 }
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String
+  tradingPairId String
+  type          OrderType
+  side          OrderSide
+  amount        Float       // Amount of base asset tokens
+  price         Float?      // Price per token (null for market orders)
+  filledAmount  Float       @default(0) // Amount that has been filled
+  status        OrderStatus @default(PENDING)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  filledAt      DateTime?   // When the order was completely filled
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradingPair TradingPair @relation(fields: [tradingPairId], references: [id], onDelete: Cascade)
+  trades      Trade[]     @relation("OrderTrades")
+
+  @@map("orders")
+}
+
+model Trade {
+  id            String   @id @default(cuid())
+  orderId       String
+  tradingPairId String
+  buyerId       String
+  sellerId      String
+  amount        Float    // Amount of tokens traded
+  price         Float    // Price per token
+  totalValue    Float    // Total value (amount * price)
+  buyerFee      Float    @default(0) // Fee paid by buyer
+  sellerFee     Float    @default(0) // Fee paid by seller
+  totalFees     Float    @default(0) // Total fees collected
+  createdAt     DateTime @default(now())
+
+  // Relations
+  order       Order       @relation("OrderTrades", fields: [orderId], references: [id], onDelete: Cascade)
+  tradingPair TradingPair @relation(fields: [tradingPairId], references: [id], onDelete: Cascade)
+  buyer       User        @relation("BuyerTrades", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller      User        @relation("SellerTrades", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@map("trades")
+}
+
+model TradingPair {
+  id              String   @id @default(cuid())
+  symbol          String   @unique // e.g., "BNX/USDT", "BTC/USDT", "ETH/USDT"
+  baseAsset       String   // e.g., "BNX", "BTC", "ETH"
+  quoteAsset      String   // e.g., "USDT", "USD"
+  isActive        Boolean  @default(true)
+  minOrderSize    Float    @default(0.001)
+  maxOrderSize    Float    @default(1000000)
+  pricePrecision  Int      @default(4)
+  amountPrecision Int      @default(4)
+  makerFee        Float    @default(0.001) // 0.1% maker fee
+  takerFee        Float    @default(0.001) // 0.1% taker fee
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  orders      Order[]
+  trades      Trade[]
+  marketData  MarketData[]
+  prices      Price[]
+  feeStructure FeeStructure? @relation(fields: [feeStructureId], references: [id])
+  feeStructureId String?
+
+  @@map("trading_pairs")
+}
+
+model MarketData {
+  id            String   @id @default(cuid())
+  tradingPairId String
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id])
+  price         Float
+  volume24h     Float    @default(0)
+  change24h     Float    @default(0)
+  high24h       Float
+  low24h        Float
+  marketCap     Float?
+  lastUpdated   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("market_data")
+}
+
+enum OrderType {
+  MARKET
+  LIMIT
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  PENDING
+  PARTIALLY_FILLED
+  FILLED
+  CANCELLED
+  REJECTED
+}
+
+model FeeStructure {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  
+  // Trading fees
+  makerFee    Float    @default(0.001) // 0.1% default
+  takerFee    Float    @default(0.001) // 0.1% default
+  
+  // Withdrawal fees
+  withdrawalFees Json // { "BTC": 0.0005, "ETH": 0.01, "USDT": 1.0 }
+  
+  // Deposit fees (usually 0)
+  depositFees Json // { "BTC": 0.0, "ETH": 0.0, "USDT": 0.0 }
+  
+  // Minimum fees
+  minTradingFee    Float @default(0.0001)
+  minWithdrawalFee  Float @default(0.0001)
+  
+  // Fee caps
+  maxTradingFee     Float?
+  maxWithdrawalFee  Float?
+  
+  // Status
+  isActive    Boolean @default(true)
+  isDefault   Boolean @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  tradingPairs TradingPair[]
+  
+  @@map("fee_structures")
+}
+
+model Portfolio {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  totalValue      Float    @default(0) // Total portfolio value in USD
+  totalPnl        Float    @default(0) // Total profit/loss
+  totalPnlPercent Float    @default(0) // Total P&L percentage
+  totalFees       Float    @default(0) // Total fees paid
+  totalTrades     Int      @default(0) // Total number of trades
+  winRate         Float    @default(0) // Win rate percentage
+  avgTradeSize    Float    @default(0) // Average trade size
+  bestTrade       Float    @default(0) // Best single trade profit
+  worstTrade      Float    @default(0) // Worst single trade loss
+  lastUpdated     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  holdings        PortfolioHolding[]
+  analytics       PortfolioAnalytics[]
+  
+  @@map("portfolios")
+}
+
+model PortfolioHolding {
+  id          String   @id @default(cuid())
+  portfolioId String
+  asset       String   // Asset symbol (BTC, ETH, USDT, etc.)
+  amount      Float    @default(0) // Amount held
+  avgPrice    Float    @default(0) // Average purchase price
+  currentPrice Float   @default(0) // Current market price
+  value       Float    @default(0) // Current value (amount * currentPrice)
+  pnl         Float    @default(0) // Profit/Loss for this holding
+  pnlPercent  Float    @default(0) // P&L percentage
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@unique([portfolioId, asset])
+  @@map("portfolio_holdings")
+}
+
+model PortfolioAnalytics {
+  id          String   @id @default(cuid())
+  portfolioId String
+  date        DateTime @default(now())
+  totalValue  Float    @default(0)
+  totalPnl    Float    @default(0)
+  totalPnlPercent Float @default(0)
+  dailyTrades Int      @default(0)
+  dailyVolume Float    @default(0)
+  dailyFees   Float    @default(0)
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  
+  @@unique([portfolioId, date])
+  @@map("portfolio_analytics")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  event       String
+  level       String
+  description String
+  metadata    Json     @default("{}")
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime @default(now())
+  
+  // Relations
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([event])
+  @@index([level])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+// Investment Plans Models
+model InvestmentPlan {
+  id                String   @id @default(cuid())
+  planName          String
+  minimumInvestment Float
+  maximumInvestment Float
+  profitPercentage  Float
+  duration          Int      // in days
+  description       String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  investments       Investment[]
+  
+  @@map("investment_plans")
+}
+
+model Investment {
+  id              String   @id @default(cuid())
+  userId          String
+  planId          String
+  investedAmount  Float
+  startDate       DateTime @default(now())
+  endDate         DateTime
+  expectedReturn  Float
+  actualReturn    Float?
+  status          InvestmentStatus @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan            InvestmentPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+  @@index([startDate])
+  @@map("investments")
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+// OTP and Password Reset Models
+model Otp {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  @@map("otps")
+}
+
 
