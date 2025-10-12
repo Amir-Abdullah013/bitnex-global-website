@@ -5,12 +5,12 @@ import Card, { CardContent, CardHeader, CardTitle } from './Card';
 import Button from './Button';
 import Input from './Input';
 import { useToast, ToastContainer } from './Toast';
-import { useBitnex } from '../lib/bitnex-context';
+import { useUniversal } from '../lib/universal-context';
 import { usePrice } from '../hooks/useWebSocket';
 import { useTradingPair } from '../lib/trading-pair-context';
 
 const TradingInterface = ({ className = '' }) => {
-  const { usdBalance, bnxBalance, formatCurrency, formatBnx } = useBitnex();
+  const { usdBalance, bnxBalance, formatCurrency, formatBnx } = useUniversal();
   const { selectedPair, getPairAssets, getPairPrecision, getPairLimits, formatPrice, formatAmount, validateOrderAmount, validateOrderPrice } = useTradingPair();
   const { baseAsset, quoteAsset } = getPairAssets();
   const { priceData, isConnected } = usePrice(baseAsset);

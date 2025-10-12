@@ -1,57 +1,106 @@
-/**
- * Loading Manager Hook
- * Manages loading states with timeout protection
- */
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 
-export const useLoadingManager = (initialLoading = false, timeout = 5000) => {
+/**
+ * useLoadingManager Hook - Manages loading states with timeout protection
+ * 
+ * Features:
+ * - 6-second timeout protection
+ * - Force stop capability
+ * - Clear console logging
+ * - No infinite loops
+ */
+const useLoadingManager = (initialLoading = false, timeout = 6000) => {
   const [isLoading, setIsLoading] = useState(initialLoading);
-  const [timeoutReached, setTimeoutReached] = useState(false);
-  const [forceRender, setForceRender] = useState(false);
+  const [timeoutId, setTimeoutId] = useState(null);
+  const [forceStopped, setForceStopped] = useState(false);
 
-  // Timeout protection
+  // Console logging for debugging
   useEffect(() => {
-    if (isLoading) {
-      const timeoutId = setTimeout(() => {
-        console.warn(`useLoadingManager: Timeout reached after ${timeout}ms`);
-        setTimeoutReached(true);
-        setForceRender(true);
-        setIsLoading(false); // Force stop loading
-      }, timeout);
+    console.log(`useLoadingManager: isLoading=${isLoading}, forceStopped=${forceStopped}, timeoutId=${timeoutId}`);
+  }, [isLoading, forceStopped, timeoutId]);
 
-      return () => clearTimeout(timeoutId);
-    } else {
-      setTimeoutReached(false);
-      setForceRender(false);
+  // Set loading state
+  const setLoading = useCallback((loading) => {
+    console.log(`useLoadingManager: Setting loading to ${loading}`);
+    setIsLoading(loading);
+    
+    if (!loading) {
+      // Clear timeout when loading stops
+      if (timeoutId) {
+        console.log('useLoadingManager: Clearing timeout');
+        clearTimeout(timeoutId);
+        setTimeoutId(null);
+      }
+      setForceStopped(false);
     }
-  }, [isLoading, timeout]);
+  }, [timeoutId]);
 
-  const startLoading = useCallback(() => {
-    setIsLoading(true);
-    setTimeoutReached(false);
-    setForceRender(false);
-  }, []);
-
-  const stopLoading = useCallback(() => {
-    setIsLoading(false);
-    setTimeoutReached(false);
-    setForceRender(false);
-  }, []);
-
+  // Force stop loading
   const forceStop = useCallback(() => {
     console.warn('useLoadingManager: Force stopping loading');
+    setForceStopped(true);
     setIsLoading(false);
-    setTimeoutReached(true);
-    setForceRender(true);
-  }, []);
+    
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
+  }, [timeoutId]);
+
+  // Start loading with timeout
+  const startLoading = useCallback((customTimeout = timeout) => {
+    console.log(`useLoadingManager: Starting loading with ${customTimeout}ms timeout`);
+    setIsLoading(true);
+    setForceStopped(false);
+    
+    // Clear existing timeout
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    
+    // Set new timeout
+    const id = setTimeout(() => {
+      console.warn(`useLoadingManager: Timeout reached after ${customTimeout}ms - force stopping`);
+      setIsLoading(false);
+      setForceStopped(true);
+    }, customTimeout);
+    
+    setTimeoutId(id);
+  }, [timeout, timeoutId]);
+
+  // Stop loading
+  const stopLoading = useCallback(() => {
+    console.log('useLoadingManager: Stopping loading');
+    setIsLoading(false);
+    setForceStopped(false);
+    
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
+  }, [timeoutId]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('useLoadingManager: Cleaning up on unmount');
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [timeoutId]);
 
   return {
-    isLoading: isLoading && !forceRender,
-    timeoutReached,
-    forceRender,
+    isLoading,
+    forceStopped,
+    setLoading,
+    forceStop,
     startLoading,
-    stopLoading,
-    forceStop
+    stopLoading
   };
 };
+
+export default useLoadingManager;
+

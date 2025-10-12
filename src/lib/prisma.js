@@ -1,35 +1,28 @@
-// Dynamic Prisma import to avoid build-time issues
-let prisma;
+import { PrismaClient } from '@prisma/client';
+
+// Singleton Prisma client to prevent connection conflicts
+let prismaClient;
 
 /**
- * Get Prisma client dynamically
+ * Get singleton Prisma client
  */
-export async function getPrisma() {
-  if (!prisma) {
-    const { PrismaClient } = await import('@prisma/client');
-    prisma = new PrismaClient({
+export function getPrisma() {
+  if (!prismaClient) {
+    prismaClient = new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
       errorFormat: 'pretty',
       datasources: {
         db: {
           url: process.env.DATABASE_URL
         }
-      },
-      // Add connection pooling configuration
-      __internal: {
-        engine: {
-          binaryTargets: ['native']
-        }
       }
     });
   }
-  return prisma;
+  return prismaClient;
 }
 
-// Legacy export for backward compatibility
-export const prisma = {
-  get: getPrisma
-};
+// Export singleton instance
+export const prisma = getPrisma();
 
 export default getPrisma;
 

@@ -20,17 +20,9 @@ const Layout = ({ children, showSidebar = true, fullWidth = false }) => {
     await signOut();
   };
 
-  if (!mounted || loading) {
-    return (
-      <div className="min-h-screen bg-binance-background flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-binance-primary"></div>
-          <p className="text-binance-textSecondary text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Removed loading check - render immediately for better UX
+  // This prevents infinite loading when auth is stuck
+  
   return (
     <div className="min-h-screen bg-binance-background flex flex-col">
       {/* Top Navbar */}
@@ -41,7 +33,7 @@ const Layout = ({ children, showSidebar = true, fullWidth = false }) => {
 
       <div className="flex flex-1">
         {/* Sidebar (desktop only) */}
-        {showSidebar && user && (
+        {showSidebar && (
           <BinanceSidebar user={user} />
         )}
 

@@ -48,6 +48,11 @@ const MarketsPage = () => {
   // Filter and sort symbols
   const filteredSymbols = allSymbols
     .filter(symbol => {
+      // Safety check for undefined or incomplete symbols
+      if (!symbol || !symbol.symbol || !symbol.baseAsset) {
+        return false;
+      }
+      
       const matchesSearch = symbol.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           symbol.baseAsset.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFilter = filterBy === 'all' || 
@@ -57,24 +62,27 @@ const MarketsPage = () => {
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
+      // Additional safety check during sort
+      if (!a || !b) return 0;
+      
       let aValue, bValue;
       
       switch (sortBy) {
         case 'price':
-          aValue = a.lastPrice;
-          bValue = b.lastPrice;
+          aValue = a.lastPrice || 0;
+          bValue = b.lastPrice || 0;
           break;
         case 'change':
-          aValue = a.priceChangePercent;
-          bValue = b.priceChangePercent;
+          aValue = a.priceChangePercent || 0;
+          bValue = b.priceChangePercent || 0;
           break;
         case 'volume':
-          aValue = a.volume;
-          bValue = b.volume;
+          aValue = a.volume || 0;
+          bValue = b.volume || 0;
           break;
         default:
-          aValue = a.lastPrice;
-          bValue = b.lastPrice;
+          aValue = a.lastPrice || 0;
+          bValue = b.lastPrice || 0;
       }
       
       return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
@@ -240,7 +248,7 @@ const MarketsPage = () => {
               <h2 className="text-lg font-semibold text-[#EAECEF]">Top Gainers</h2>
             </div>
             <div className="space-y-3">
-              {topGainers.map((symbol, index) => (
+              {topGainers.filter(symbol => symbol && symbol.symbol).map((symbol, index) => (
                 <motion.div
                   key={symbol.symbol}
                   initial={{ opacity: 0, x: -20 }}
@@ -254,7 +262,7 @@ const MarketsPage = () => {
                       {symbol.symbol.replace('USDT', '/USDT')}
                     </span>
                     <span className="text-xs text-[#B7BDC6]">
-                      ${formatPrice(symbol.lastPrice)}
+                      ${formatPrice(symbol.lastPrice || 0)}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -262,7 +270,7 @@ const MarketsPage = () => {
                       className="text-sm font-medium"
                       style={{ color: getChangeColor(symbol.isPositive) }}
                     >
-                      +{symbol.priceChangePercent.toFixed(2)}%
+                      +{(symbol.priceChangePercent || 0).toFixed(2)}%
                     </span>
                     <button
                       onClick={(e) => {
@@ -290,7 +298,7 @@ const MarketsPage = () => {
               <h2 className="text-lg font-semibold text-[#EAECEF]">Top Losers</h2>
             </div>
             <div className="space-y-3">
-              {topLosers.map((symbol, index) => (
+              {topLosers.filter(symbol => symbol && symbol.symbol).map((symbol, index) => (
                 <motion.div
                   key={symbol.symbol}
                   initial={{ opacity: 0, x: -20 }}
@@ -304,7 +312,7 @@ const MarketsPage = () => {
                       {symbol.symbol.replace('USDT', '/USDT')}
                     </span>
                     <span className="text-xs text-[#B7BDC6]">
-                      ${formatPrice(symbol.lastPrice)}
+                      ${formatPrice(symbol.lastPrice || 0)}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -312,7 +320,7 @@ const MarketsPage = () => {
                       className="text-sm font-medium"
                       style={{ color: getChangeColor(symbol.isPositive) }}
                     >
-                      {symbol.priceChangePercent.toFixed(2)}%
+                      {(symbol.priceChangePercent || 0).toFixed(2)}%
                     </span>
                     <button
                       onClick={(e) => {

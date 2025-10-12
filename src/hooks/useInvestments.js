@@ -20,8 +20,8 @@ export const useInvestments = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-        console.warn('useInvestments: API call timed out after 5 seconds');
-      }, 5000);
+        console.warn('useInvestments: API call timed out after 6 seconds');
+      }, 6000);
       
       const response = await fetch(`/api/investments?userId=${user.id}`, {
         signal: controller.signal
@@ -40,9 +40,11 @@ export const useInvestments = () => {
         console.warn('useInvestments: API call aborted due to timeout');
         setError('Request timed out');
       } else {
-        console.error('Error loading investments:', err);
+        console.error('useInvestments Error:', err);
         setError('Failed to load investments');
       }
+      // Set fallback data to prevent empty state
+      setInvestments([]);
     } finally {
       setLoading(false);
     }

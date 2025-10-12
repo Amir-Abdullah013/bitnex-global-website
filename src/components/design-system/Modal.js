@@ -278,3 +278,4 @@ export const AlertModal = ({
 
 export default Modal;
 
+

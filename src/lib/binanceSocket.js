@@ -270,7 +270,7 @@ class BinanceSocket {
       
       ws.onopen = () => {
         console.log(`WebSocket connected: ${wsUrl}`);
-        this.connections.set(connectionId, ws);
+        this.sockets.set(connectionId, ws);
       };
 
       ws.onmessage = (event) => {
@@ -284,14 +284,14 @@ class BinanceSocket {
 
       ws.onerror = (error) => {
         console.warn('WebSocket error, falling back to HTTP polling:', error);
-        this.connections.delete(connectionId);
+        this.sockets.delete(connectionId);
         // Fallback to polling
         this.startPolling(options.symbol, callback, 5000);
       };
 
       ws.onclose = () => {
         console.log('WebSocket closed');
-        this.connections.delete(connectionId);
+        this.sockets.delete(connectionId);
       };
 
       return connectionId;

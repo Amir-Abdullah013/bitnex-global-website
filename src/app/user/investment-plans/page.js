@@ -19,7 +19,7 @@ export default function InvestmentPlansPage() {
   
   const [plans, setPlans] = useState([]);
   const [userInvestments, setUserInvestments] = useState([]);
-  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [loadingPlans, setLoadingPlans] = useState(false);
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [investAmount, setInvestAmount] = useState('');

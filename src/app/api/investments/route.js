@@ -43,12 +43,22 @@ export async function GET(request) {
       { success: false, error: 'Failed to fetch investments' },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 
 // POST /api/investments - Create new investment
 export async function POST(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+    
     const body = await request.json();
     const { userId, planId, investedAmount } = body;
 

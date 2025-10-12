@@ -47,10 +47,20 @@ const useMarketTicker = (symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT']) => {
   useEffect(() => {
     const initialData = new Map();
     memoizedSymbols.forEach(symbol => {
+      // Extract base asset properly (e.g., BTCUSDT -> BTC, ETHBTC -> ETH)
+      let baseAsset = symbol;
+      if (symbol.endsWith('USDT')) {
+        baseAsset = symbol.slice(0, -4); // Remove last 4 chars (USDT)
+      } else if (symbol.endsWith('BTC')) {
+        baseAsset = symbol.slice(0, -3); // Remove last 3 chars (BTC)
+      } else if (symbol.endsWith('ETH')) {
+        baseAsset = symbol.slice(0, -3); // Remove last 3 chars (ETH)
+      }
+      
       initialData.set(symbol, {
         symbol,
-        baseAsset: symbol.replace('USDT', '').replace('BTC', '').replace('ETH', ''),
-        quoteAsset: 'USDT',
+        baseAsset,
+        quoteAsset: symbol.endsWith('USDT') ? 'USDT' : symbol.endsWith('BTC') ? 'BTC' : 'ETH',
         lastPrice: 0,
         priceChange: 0,
         priceChangePercent: 0,
@@ -202,4 +212,5 @@ const useMarketTicker = (symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT']) => {
 };
 
 export default useMarketTicker;
+
 

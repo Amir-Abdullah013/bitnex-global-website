@@ -11,7 +11,7 @@ export default function NotificationDetailPage() {
   const router = useRouter();
   const params = useParams();
   const [notification, setNotification] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [markingAsRead, setMarkingAsRead] = useState(false);
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);

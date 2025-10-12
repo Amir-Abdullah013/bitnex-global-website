@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import Card, { CardContent, CardHeader, CardTitle } from './Card';
 import Button from './Button';
-import { useBitnex } from '../lib/bitnex-context';
+import { useUniversal } from '../lib/universal-context';
 import { usePrice } from '../hooks/useWebSocket';
 import { useTradingPair } from '../lib/trading-pair-context';
 
@@ -130,7 +130,7 @@ const LoadingSkeleton = () => (
 );
 
 const BnxPriceChart = ({ className = '' }) => {
-  const { bnxPrice, formatCurrency } = useBitnex();
+  const { bnxPrice, formatCurrency } = useUniversal();
   const { selectedPair, getPairAssets } = useTradingPair();
   const { baseAsset } = getPairAssets();
   const { priceData, isConnected } = usePrice(baseAsset);

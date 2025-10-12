@@ -302,3 +302,4 @@ const ResponsiveTradingInterface = () => {
 
 export default ResponsiveTradingInterface;
 
+

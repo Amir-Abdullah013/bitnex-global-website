@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import Card, { CardContent, CardHeader, CardTitle } from './Card';
 import Button from './Button';
-import { useBitnex } from '../lib/bitnex-context';
+import { useUniversal } from '../lib/universal-context';
 
 // Time filter options
 const TIME_FILTERS = [
@@ -128,7 +128,7 @@ const LoadingSkeleton = () => (
 );
 
 const BnxPriceChart = ({ className = '' }) => {
-  const { bnxPrice, formatCurrency } = useBitnex();
+  const { bnxPrice, formatCurrency } = useUniversal();
   const [selectedFilter, setSelectedFilter] = useState('1d');
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

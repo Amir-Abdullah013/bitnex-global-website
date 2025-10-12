@@ -9,8 +9,6 @@ import LiveTrades from '../../../components/LiveTrades';
 import TradingPairSelector from '../../../components/TradingPairSelector';
 import { useUniversal } from '../../../lib/universal-context';
 import { TradingPairProvider, useTradingPair } from '../../../lib/trading-pair-context';
-import SafeLoader from '../../../components/SafeLoader';
-import { useLoadingManager } from '../../../hooks/useLoadingManager';
 
 const TradePageContent = () => {
   const { bnxPrice, formatCurrency } = useUniversal();
@@ -22,38 +20,7 @@ const TradePageContent = () => {
     high24h: 0,
     low24h: 0
   });
-  // Safe loading management
-  const { isLoading: safeLoading, stopLoading } = useLoadingManager(true, 5000);
 
-  const fetchMarketData = async () => {
-    try {
-      const { baseAsset } = getPairAssets();
-      const response = await fetch(`/api/price?symbol=${baseAsset}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setMarketData({
-          price: data.price,
-          change24h: data.change24h || 0,
-          volume24h: data.volume24h || 0,
-          high24h: data.high24h || data.price,
-          low24h: data.low24h || data.price
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching market data:', error);
-    } finally {
-      // Always stop loading after first fetch
-      stopLoading();
-    }
-  };
-
-  // Fetch market data on mount and when pair changes
-  useEffect(() => {
-    fetchMarketData();
-    const interval = setInterval(fetchMarketData, 5000);
-    return () => clearInterval(interval);
-  }, [selectedPair]);
 
   const getPriceChangeColor = () => {
     return marketData.change24h >= 0 ? 'text-binance-green' : 'text-binance-red';
@@ -62,17 +29,6 @@ const TradePageContent = () => {
   const getPriceChangeIcon = () => {
     return marketData.change24h >= 0 ? '↗' : '↘';
   };
-
-  // Safe loading with timeout protection
-  if (safeLoading) {
-    return (
-      <Layout showSidebar={true}>
-        <SafeLoader isLoading={true} text="Loading market data..." timeout={5000}>
-          <div>Trading interface will load here...</div>
-        </SafeLoader>
-      </Layout>
-    );
-  }
 
   return (
     <Layout showSidebar={true}>

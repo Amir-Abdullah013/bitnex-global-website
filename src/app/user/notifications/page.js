@@ -10,7 +10,7 @@ export default function UserNotificationsPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [markingAsRead, setMarkingAsRead] = useState(null);
   const [toast, setToast] = useState(null);
 

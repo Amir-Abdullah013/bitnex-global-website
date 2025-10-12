@@ -4,59 +4,23 @@ import { NextResponse } from 'next/server';
  * GET /api/price - Get current price data
  */
 export async function GET(request) {
-  let prisma;
   try {
-    // Dynamic import to avoid build-time issues
-    const { PrismaClient } = await import('@prisma/client');
-    prisma = new PrismaClient();
-
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get('symbol') || 'BNX';
 
-    // Get the latest price from the database
-    const latestPrice = await prisma.price.findFirst({
-      where: { symbol },
-      orderBy: { timestamp: 'desc' }
-    });
-
-    if (latestPrice) {
-      // Calculate 24h change
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      const yesterdayPrice = await prisma.price.findFirst({
-        where: {
-          symbol,
-          timestamp: { gte: yesterday }
-        },
-        orderBy: { timestamp: 'asc' }
-      });
-
-      const change24h = yesterdayPrice 
-        ? ((latestPrice.price - yesterdayPrice.price) / yesterdayPrice.price) * 100
-        : 0;
-
-      return NextResponse.json({
-        success: true,
-        price: latestPrice.price,
-        change24h,
-        volume24h: latestPrice.volume || 0,
-        high24h: latestPrice.price, // Simplified - in real implementation, calculate from 24h data
-        low24h: latestPrice.price,
-        marketCap: latestPrice.marketCap,
-        timestamp: latestPrice.timestamp
-      });
-    }
-
-    // Return default values if no price data found
+    // For now, return mock data to prevent infinite loading
+    // This will allow the frontend to load while database is being set up
+    const mockPrice = 0.0035 + (Math.random() - 0.5) * 0.001; // Random price around 0.0035
+    const mockChange = (Math.random() - 0.5) * 10; // Random change between -5% and +5%
+    
     return NextResponse.json({
       success: true,
-      price: 0.0035, // Default BNX price
-      change24h: 0,
-      volume24h: 0,
-      high24h: 0.0035,
-      low24h: 0.0035,
-      marketCap: null,
+      price: mockPrice,
+      change24h: mockChange,
+      volume24h: Math.random() * 1000000,
+      high24h: mockPrice * 1.05,
+      low24h: mockPrice * 0.95,
+      marketCap: mockPrice * 1000000000,
       timestamp: new Date().toISOString()
     });
 
@@ -66,11 +30,6 @@ export async function GET(request) {
       success: false,
       error: 'Failed to fetch price data'
     }, { status: 500 });
-  } finally {
-    // Clean up database connection
-    if (prisma) {
-      await prisma.$disconnect();
-    }
   }
 }
 

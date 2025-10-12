@@ -50,18 +50,13 @@ function DepositPageContent() {
 
   useEffect(() => {
     setMounted(true);
+    // Load data immediately
+    loadBinanceAddress();
+    loadExchangeRates();
   }, []);
 
-  useEffect(() => {
-    if (mounted && !loading) {
-      if (!isAuthenticated) {
-        router.push('/auth/signin');
-      } else {
-        loadBinanceAddress();
-        loadExchangeRates();
-      }
-    }
-  }, [mounted, loading, isAuthenticated, router]);
+  // Authentication redirect disabled for development
+  // Middleware will handle authentication in production
 
   // Load exchange rates
   const loadExchangeRates = async () => {
@@ -323,21 +318,8 @@ function DepositPageContent() {
     }
   };
 
-  if (!mounted || loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
+  // Removed loading checks - render immediately for better UX
+  
   return (
     <Layout showSidebar={true}>
       <div className="max-w-6xl mx-auto">

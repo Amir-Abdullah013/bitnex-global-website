@@ -253,7 +253,7 @@ export default function StakingPage() {
   const [mounted, setMounted] = useState(false);
 
   const [stakings, setStakings] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [errorState, setErrorState] = useState(null);
   const [tikiBalance, setTikiBalance] = useState(0);
 

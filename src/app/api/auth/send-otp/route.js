@@ -4,20 +4,16 @@
  */
 
 import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+import nodemailer from 'nodemailer';
+
+const prisma = new PrismaClient();
 
 export async function POST(request) {
-  let prisma;
-  let transporter;
-  
   try {
-    // Dynamic imports to avoid build-time issues
-    const { PrismaClient } = await import('@prisma/client');
-    const nodemailer = await import('nodemailer');
-    
-    prisma = new PrismaClient();
 
     // Email configuration
-    transporter = nodemailer.default.createTransporter({
+    const transporter = nodemailer.createTransporter({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -108,9 +104,6 @@ export async function POST(request) {
       { status: 500 }
     );
   } finally {
-    // Clean up database connection
-    if (typeof prisma !== 'undefined') {
-      await prisma.$disconnect();
-    }
+    await prisma.$disconnect();
   }
 }

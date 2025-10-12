@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Card, { CardContent, CardHeader, CardTitle } from './Card';
-import { useBitnex } from '../lib/bitnex-context';
+import { useUniversal } from '../lib/universal-context';
 
 const TradingAnalytics = ({ className = '' }) => {
-  const { formatCurrency, formatBnx } = useBitnex();
+  const { formatCurrency, formatBnx } = useUniversal();
   const [analytics, setAnalytics] = useState(null);
   const [recentTrades, setRecentTrades] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -311,4 +311,5 @@ const TradingAnalytics = ({ className = '' }) => {
 };
 
 export default TradingAnalytics;
+
 

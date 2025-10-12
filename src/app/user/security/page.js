@@ -8,7 +8,7 @@ import { Button, Card, Input, Loader, Toast } from "@/components";
 export default function SecuritySettingsPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [toast, setToast] = useState(null);
 

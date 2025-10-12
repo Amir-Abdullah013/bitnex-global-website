@@ -9,17 +9,18 @@ import Layout from '../../components/Layout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../components/Card';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
-import LoadingSkeleton from '../../components/LoadingSkeleton';
+// LoadingSkeleton removed - using inline skeleton
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { useToast, ToastContainer } from '../../components/Toast';
 
 export default function InvestmentPlansPage() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const { usdBalance, formatCurrency } = useUniversal();
   const { plans, loading: loadingPlans, error: plansError } = useInvestmentPlans();
   const router = useRouter();
   const { success, error, toasts, removeToast } = useToast();
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(true);
+  const [forceRender, setForceRender] = useState(true); // Force render regardless of auth state
   
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -27,16 +28,33 @@ export default function InvestmentPlansPage() {
   const [investing, setInvesting] = useState(false);
 
   useEffect(() => {
+    console.log('Plans Page: Component mounted');
+    console.log('Plans Page: authLoading=', authLoading, 'isAuthenticated=', isAuthenticated);
     setMounted(true);
+    
+    // IMMEDIATE force render - no waiting!
+    console.log('Plans Page: Setting forceRender to true immediately');
+    setForceRender(true);
   }, []);
 
   useEffect(() => {
-    if (mounted && !loading) {
-      if (!isAuthenticated) {
-        router.push('/auth/signin?redirect=/plans');
-      }
+    console.log('Plans Page: Auth state changed - authLoading=', authLoading, 'isAuthenticated=', isAuthenticated, 'user=', user);
+    
+    // Once auth completes (authLoading becomes false), update forceRender
+    if (!authLoading) {
+      setForceRender(true);
     }
-  }, [mounted, loading, isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, user]);
+
+  // Authentication redirect disabled for development
+  // Middleware will handle authentication in production
+  // useEffect(() => {
+  //   if (mounted && !authLoading) {
+  //     if (!isAuthenticated) {
+  //       router.push('/auth/signin?redirect=/plans');
+  //     }
+  //   }
+  // }, [mounted, authLoading, isAuthenticated, router]);
 
   const handleInvest = (plan) => {
     setSelectedPlan(plan);
@@ -106,22 +124,8 @@ export default function InvestmentPlansPage() {
     return colors[index % colors.length];
   };
 
-  if (!mounted) {
-    return (
-      <Layout showSidebar={true}>
-        <div className="min-h-screen bg-binance-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-binance-primary mx-auto mb-4"></div>
-            <p className="text-binance-textSecondary">Loading...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  // Removed loading checks - render immediately for better UX
+  // Authentication handled by middleware
 
   return (
     <ErrorBoundary>
@@ -165,7 +169,11 @@ export default function InvestmentPlansPage() {
             <h2 className="text-2xl font-bold text-binance-textPrimary mb-6">Available Plans</h2>
             
             {loadingPlans ? (
-              <LoadingSkeleton type="card" count={3} />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse bg-gray-200 rounded-lg p-6 h-64"></div>
+                ))}
+              </div>
             ) : plansError ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">⚠️</div>

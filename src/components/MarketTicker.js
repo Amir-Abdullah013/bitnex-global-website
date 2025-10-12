@@ -94,8 +94,24 @@ const MarketTicker = ({
   };
 
   const formatSymbol = (symbol) => {
-    const base = symbol.replace('USDT', '').replace('BTC', '').replace('ETH', '');
-    const quote = symbol.includes('USDT') ? 'USDT' : symbol.includes('BTC') ? 'BTC' : 'ETH';
+    // Safety check for undefined
+    if (!symbol) return 'N/A';
+    
+    // Extract base and quote properly
+    let base = symbol;
+    let quote = 'USDT';
+    
+    if (symbol.endsWith('USDT')) {
+      base = symbol.slice(0, -4);
+      quote = 'USDT';
+    } else if (symbol.endsWith('BTC')) {
+      base = symbol.slice(0, -3);
+      quote = 'BTC';
+    } else if (symbol.endsWith('ETH')) {
+      base = symbol.slice(0, -3);
+      quote = 'ETH';
+    }
+    
     return `${base}/${quote}`;
   };
 
@@ -156,7 +172,9 @@ const MarketTicker = ({
 
       {/* Ticker List */}
       <div className="flex space-x-0">
-        {Array.from(tickerData.values()).map((data, index) => {
+        {Array.from(tickerData.values())
+          .filter(data => data && data.symbol) // Safety check for undefined data
+          .map((data, index) => {
           const ChangeIcon = getChangeIcon(data.isPositive);
           const changeColor = getChangeColor(data.isPositive);
           
@@ -193,7 +211,7 @@ const MarketTicker = ({
                     animate="updated"
                     className="text-lg font-bold text-[#EAECEF]"
                   >
-                    ${data.formattedPrice}
+                    ${data.formattedPrice || '0.00'}
                   </motion.div>
                 </div>
 
@@ -209,7 +227,7 @@ const MarketTicker = ({
                         className="text-sm font-medium"
                         style={{ color: changeColor }}
                       >
-                        {data.isPositive ? '+' : ''}{data.priceChangePercent.toFixed(2)}%
+                        {data.isPositive ? '+' : ''}{(data.priceChangePercent || 0).toFixed(2)}%
                       </span>
                     </div>
                   )}
@@ -218,7 +236,7 @@ const MarketTicker = ({
                     <div className="flex items-center space-x-1">
                       <Volume2 size={10} className="text-[#848E9C]" />
                       <span className="text-xs text-[#848E9C]">
-                        {data.formattedVolume}
+                        {data.formattedVolume || '0'}
                       </span>
                     </div>
                   )}
@@ -256,4 +274,5 @@ const MarketTicker = ({
 };
 
 export default MarketTicker;
+
 

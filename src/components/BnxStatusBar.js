@@ -1,9 +1,9 @@
 'use client';
 
-import { useBitnex } from '../lib/bitnex-context';
+import { useUniversal } from '../lib/universal-context';
 
 const BnxStatusBar = () => {
-  const { usdBalance, bnxBalance, bnxPrice, formatCurrency, formatBnx, isLoading } = useBitnex();
+  const { usdBalance, bnxBalance, bnxPrice, formatCurrency, formatBnx, isLoading } = useUniversal();
 
   // Don't show status bar while loading
   if (isLoading) {

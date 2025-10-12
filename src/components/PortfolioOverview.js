@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Card, { CardContent, CardHeader, CardTitle } from './Card';
-import { useBitnex } from '../lib/bitnex-context';
+import { useUniversal } from '../lib/universal-context';
 
 const PortfolioOverview = ({ className = '' }) => {
-  const { formatCurrency, formatBnx } = useBitnex();
+  const { formatCurrency, formatBnx } = useUniversal();
   const [portfolio, setPortfolio] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -106,7 +106,14 @@ const PortfolioOverview = ({ className = '' }) => {
     return null;
   }
 
-  const { totalValue, totalPnl, totalPnlPercent, holdings, wallet, metrics } = portfolio;
+  const { 
+    totalValue = 0, 
+    totalPnl = 0, 
+    totalPnlPercent = 0, 
+    holdings = [], 
+    wallet = null, 
+    metrics = null 
+  } = portfolio || {};
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -153,7 +160,7 @@ const PortfolioOverview = ({ className = '' }) => {
             {/* Total Trades */}
             <div className="text-center">
               <div className="text-2xl font-bold text-binance-textPrimary">
-                {portfolio.totalTrades}
+                {portfolio.totalTrades || 0}
               </div>
               <div className="text-binance-textSecondary text-sm">Total Trades</div>
             </div>
@@ -178,7 +185,7 @@ const PortfolioOverview = ({ className = '' }) => {
                     <div>
                       <div className="font-medium text-binance-textPrimary">{holding.asset}</div>
                       <div className="text-sm text-binance-textSecondary">
-                        {holding.amount.toFixed(6)} {holding.asset}
+                        {(holding.amount || 0).toFixed(6)} {holding.asset}
                       </div>
                     </div>
                   </div>
@@ -186,8 +193,8 @@ const PortfolioOverview = ({ className = '' }) => {
                     <div className="font-medium text-binance-textPrimary">
                       {formatCurrency(holding.value)}
                     </div>
-                    <div className={`text-sm ${holding.pnl >= 0 ? 'text-binance-green' : 'text-binance-red'}`}>
-                      {holding.pnl >= 0 ? '+' : ''}{formatCurrency(holding.pnl)} ({holding.pnlPercent >= 0 ? '+' : ''}{holding.pnlPercent.toFixed(2)}%)
+                    <div className={`text-sm ${(holding.pnl || 0) >= 0 ? 'text-binance-green' : 'text-binance-red'}`}>
+                      {(holding.pnl || 0) >= 0 ? '+' : ''}{formatCurrency(holding.pnl || 0)} ({(holding.pnlPercent || 0) >= 0 ? '+' : ''}{(holding.pnlPercent || 0).toFixed(2)}%)
                     </div>
                   </div>
                 </div>
@@ -256,28 +263,28 @@ const PortfolioOverview = ({ className = '' }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-lg font-bold text-binance-textPrimary">
-                {portfolio.winRate.toFixed(1)}%
+                {(portfolio.winRate || 0).toFixed(1)}%
               </div>
               <div className="text-binance-textSecondary text-sm">Win Rate</div>
             </div>
 
             <div className="text-center">
               <div className="text-lg font-bold text-binance-textPrimary">
-                {formatCurrency(portfolio.avgTradeSize)}
+                {formatCurrency(portfolio.avgTradeSize || 0)}
               </div>
               <div className="text-binance-textSecondary text-sm">Avg Trade Size</div>
             </div>
 
             <div className="text-center">
               <div className="text-lg font-bold text-binance-green">
-                {formatCurrency(portfolio.bestTrade)}
+                {formatCurrency(portfolio.bestTrade || 0)}
               </div>
               <div className="text-binance-textSecondary text-sm">Best Trade</div>
             </div>
 
             <div className="text-center">
               <div className="text-lg font-bold text-binance-red">
-                {formatCurrency(portfolio.worstTrade)}
+                {formatCurrency(portfolio.worstTrade || 0)}
               </div>
               <div className="text-binance-textSecondary text-sm">Worst Trade</div>
             </div>

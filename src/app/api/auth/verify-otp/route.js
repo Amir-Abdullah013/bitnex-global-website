@@ -4,14 +4,12 @@
  */
 
 import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function POST(request) {
-  let prisma;
-  
   try {
-    // Dynamic import to avoid build-time issues
-    const { PrismaClient } = await import('@prisma/client');
-    prisma = new PrismaClient();
     const { email, otp } = await request.json();
 
     if (!email || !otp) {
@@ -109,9 +107,6 @@ export async function POST(request) {
       { status: 500 }
     );
   } finally {
-    // Clean up database connection
-    if (typeof prisma !== 'undefined') {
-      await prisma.$disconnect();
-    }
+    await prisma.$disconnect();
   }
 }
