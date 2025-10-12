@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 /**
  * GET /api/orders/orderbook - Get order book for a specific trading pair
  */
 export async function GET(request) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const { searchParams } = new URL(request.url);
     const tradingPair = searchParams.get('tradingPair') || 'BNX/USDT';
     const limit = parseInt(searchParams.get('limit')) || 20;
@@ -104,5 +105,10 @@ export async function GET(request) {
       success: false,
       error: 'Failed to fetch order book'
     }, { status: 500 });
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
