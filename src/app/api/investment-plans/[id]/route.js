@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 // GET /api/investment-plans/[id] - Get specific investment plan
 export async function GET(request, { params }) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const { id } = params;
 
     const plan = await prisma.investmentPlan.findUnique({
@@ -40,12 +41,21 @@ export async function GET(request, { params }) {
       { success: false, error: 'Failed to fetch investment plan' },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 
 // PUT /api/investment-plans/[id] - Update investment plan (Admin only)
 export async function PUT(request, { params }) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const { id } = params;
     const body = await request.json();
     const { planName, minimumInvestment, maximumInvestment, profitPercentage, duration, description, isActive } = body;
@@ -97,12 +107,21 @@ export async function PUT(request, { params }) {
       { success: false, error: 'Failed to update investment plan' },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 
 // DELETE /api/investment-plans/[id] - Delete investment plan (Admin only)
 export async function DELETE(request, { params }) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     const { id } = params;
 
     // Check if plan has active investments
@@ -134,5 +153,10 @@ export async function DELETE(request, { params }) {
       { success: false, error: 'Failed to delete investment plan' },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }

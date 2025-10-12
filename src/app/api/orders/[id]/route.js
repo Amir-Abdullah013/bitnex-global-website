@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { orderMatchingEngine } from '../../../../lib/order-matching-engine';
 import { authHelpers } from '@/lib/supabase';
 
@@ -11,13 +10,15 @@ export const setWebSocketServer = (server) => {
   wsServer = server;
 };
 
-const prisma = new PrismaClient();
-
 /**
  * GET /api/orders/[id] - Get order details
  */
 export async function GET(request, { params }) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     // Get current user
     const currentUser = await authHelpers.getCurrentUser();
     if (!currentUser) {
@@ -96,6 +97,11 @@ export async function GET(request, { params }) {
       { error: 'Failed to fetch order details', details: error.message },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 
@@ -103,7 +109,11 @@ export async function GET(request, { params }) {
  * DELETE /api/orders/[id] - Cancel an order
  */
 export async function DELETE(request, { params }) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     // Get current user
     const currentUser = await authHelpers.getCurrentUser();
     if (!currentUser) {
@@ -173,6 +183,11 @@ export async function DELETE(request, { params }) {
       },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
 
@@ -180,7 +195,11 @@ export async function DELETE(request, { params }) {
  * PATCH /api/orders/[id] - Update order (for partial cancellations or modifications)
  */
 export async function PATCH(request, { params }) {
+  let prisma;
   try {
+    // Dynamic import to avoid build-time issues
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
     // Get current user
     const currentUser = await authHelpers.getCurrentUser();
     if (!currentUser) {
@@ -303,5 +322,10 @@ export async function PATCH(request, { params }) {
       },
       { status: 500 }
     );
+  } finally {
+    // Clean up database connection
+    if (typeof prisma !== 'undefined') {
+      await prisma.$disconnect();
+    }
   }
 }
