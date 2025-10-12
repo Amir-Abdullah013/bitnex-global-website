@@ -3,9 +3,19 @@
  * Handles trading fees, withdrawal fees, and deposit fees
  */
 
-import { PrismaClient } from '@prisma/client';
+// Dynamic Prisma import to avoid build-time issues
+let prisma;
 
-const prisma = new PrismaClient();
+/**
+ * Get Prisma client dynamically
+ */
+async function getPrisma() {
+  if (!prisma) {
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 export class FeeCalculator {
   constructor() {
@@ -36,7 +46,8 @@ export class FeeCalculator {
    */
   async getFeeStructure(tradingPairId) {
     try {
-      const tradingPair = await prisma.tradingPair.findUnique({
+      const prismaClient = await getPrisma();
+      const tradingPair = await prismaClient.tradingPair.findUnique({
         where: { id: tradingPairId },
         include: { feeStructure: true }
       });

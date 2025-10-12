@@ -1,9 +1,74 @@
 'use client';
 
-import { PrismaClient } from '@prisma/client';
-import { feeCalculator } from './fee-calculator';
+// Dynamic Prisma import to avoid build-time issues
+let prismaClient;
 
-const prisma = new PrismaClient();
+/**
+ * Get Prisma client dynamically
+ */
+async function getPrisma() {
+  if (!prismaClient) {
+    const { PrismaClient } = await import('@prisma/client');
+    prismaClient = new PrismaClient();
+  }
+  return prismaClient;
+}
+
+// Replace all prisma calls with getPrisma() calls
+const prisma = {
+  wallet: {
+    findUnique: async (args) => {
+      const client = await getPrisma();
+      return client.wallet.findUnique(args);
+    },
+    findFirst: async (args) => {
+      const client = await getPrisma();
+      return client.wallet.findFirst(args);
+    },
+    create: async (args) => {
+      const client = await getPrisma();
+      return client.wallet.create(args);
+    },
+    update: async (args) => {
+      const client = await getPrisma();
+      return client.wallet.update(args);
+    }
+  },
+  order: {
+    create: async (args) => {
+      const client = await getPrisma();
+      return client.order.create(args);
+    },
+    findMany: async (args) => {
+      const client = await getPrisma();
+      return client.order.findMany(args);
+    },
+    findFirst: async (args) => {
+      const client = await getPrisma();
+      return client.order.findFirst(args);
+    },
+    update: async (args) => {
+      const client = await getPrisma();
+      return client.order.update(args);
+    }
+  },
+  trade: {
+    create: async (args) => {
+      const client = await getPrisma();
+      return client.trade.create(args);
+    },
+    findMany: async (args) => {
+      const client = await getPrisma();
+      return client.trade.findMany(args);
+    }
+  },
+  price: {
+    findFirst: async (args) => {
+      const client = await getPrisma();
+      return client.price.findFirst(args);
+    }
+  }
+};
 
 /**
  * Order Matching Engine for Bitnex Global

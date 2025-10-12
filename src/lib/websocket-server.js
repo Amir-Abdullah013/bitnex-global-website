@@ -1,9 +1,20 @@
 import { Server } from 'socket.io';
-import { PrismaClient } from '@prisma/client';
 import { orderMatchingEngine } from './order-matching-engine';
 import chartDataService from './chart-data-service';
 
-const prisma = new PrismaClient();
+// Dynamic Prisma import to avoid build-time issues
+let prisma;
+
+/**
+ * Get Prisma client dynamically
+ */
+async function getPrisma() {
+  if (!prisma) {
+    const { PrismaClient } = await import('@prisma/client');
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 class WebSocketServer {
   constructor(server) {
@@ -195,7 +206,8 @@ class WebSocketServer {
   // Get current price data
   async getCurrentPrice(symbol) {
     try {
-      const latestPrice = await prisma.price.findFirst({
+      const prismaClient = await getPrisma();
+      const latestPrice = await prismaClient.price.findFirst({
         where: { symbol },
         orderBy: { timestamp: 'desc' }
       });
@@ -205,7 +217,7 @@ class WebSocketServer {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         
-        const yesterdayPrice = await prisma.price.findFirst({
+        const yesterdayPrice = await prismaClient.price.findFirst({
           where: {
             symbol,
             timestamp: { gte: yesterday }
