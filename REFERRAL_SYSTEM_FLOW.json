@@ -1,0 +1,175 @@
+{
+  "referral_system_flow": {
+    "user_registration_with_referral": {
+      "step_1": {
+        "action": "User visits signup page with ?ref=BNX123",
+        "description": "User clicks referral link or enters referral code during signup"
+      },
+      "step_2": {
+        "action": "Validate referral code",
+        "description": "Check if referral code exists and is active",
+        "validation": {
+          "check_referral_code_exists": true,
+          "check_referrer_status_active": true,
+          "check_user_not_already_referred": true
+        }
+      },
+      "step_3": {
+        "action": "Create user account",
+        "description": "Create user with referral information",
+        "data_updated": {
+          "referralCode": "Generated unique code (BNX + random)",
+          "referredBy": "BNX123",
+          "referralLevel": "Referrer's level + 1"
+        }
+      },
+      "step_4": {
+        "action": "Create referral record",
+        "description": "Link referrer and referred user",
+        "database_operations": [
+          "INSERT INTO referrals",
+          "UPDATE user referral fields"
+        ]
+      }
+    },
+    "profitable_action_trigger": {
+      "step_1": {
+        "action": "User performs profitable action",
+        "description": "User makes deposit, trade, investment, or stakes tokens",
+        "supported_actions": ["DEPOSIT", "TRADE", "INVESTMENT", "STAKING"]
+      },
+      "step_2": {
+        "action": "Check if user has referrer",
+        "description": "Verify user was referred by someone",
+        "condition": "user.referredBy !== null"
+      },
+      "step_3": {
+        "action": "Get referral chain",
+        "description": "Build chain of referrers up to 4 levels",
+        "max_levels": 4,
+        "chain_building": {
+          "level_1": "Direct referrer (10% commission)",
+          "level_2": "Referrer of referrer (5% commission)",
+          "level_3": "Third level (2% commission)",
+          "level_4": "Fourth level (1% commission)"
+        }
+      },
+      "step_4": {
+        "action": "Calculate and distribute rewards",
+        "description": "Distribute commissions to each level in chain",
+        "commission_rates": {
+          "level_1": "10%",
+          "level_2": "5%",
+          "level_3": "2%",
+          "level_4": "1%"
+        },
+        "reward_calculation": "amount * commission_rate"
+      },
+      "step_5": {
+        "action": "Update user wallets",
+        "description": "Add rewards to referrers' wallet balances",
+        "operations": [
+          "UPDATE wallets SET balance = balance + reward_amount",
+          "UPDATE users SET referralEarnings = referralEarnings + reward_amount"
+        ]
+      },
+      "step_6": {
+        "action": "Create transaction records",
+        "description": "Record each reward as a transaction",
+        "transaction_type": "DEPOSIT",
+        "description": "Referral reward from [source_type]"
+      },
+      "step_7": {
+        "action": "Create reward records",
+        "description": "Track each reward in referral_rewards table",
+        "fields": [
+          "userId", "amount", "percentage", "sourceType", 
+          "sourceId", "level", "status"
+        ]
+      }
+    },
+    "referral_summary_retrieval": {
+      "step_1": {
+        "action": "Get user referral code",
+        "description": "Retrieve user's unique referral code"
+      },
+      "step_2": {
+        "action": "Count total referrals",
+        "description": "Count active referrals made by user"
+      },
+      "step_3": {
+        "action": "Calculate total earnings",
+        "description": "Sum all paid referral rewards"
+      },
+      "step_4": {
+        "action": "Get referral tree",
+        "description": "Get list of users referred by this user"
+      },
+      "step_5": {
+        "action": "Get recent rewards",
+        "description": "Get recent reward history"
+      }
+    },
+    "reward_distribution_example": {
+      "scenario": "User deposits $1000 with referral chain",
+      "transaction_amount": 1000.00,
+      "referral_chain": [
+        {
+          "level": 1,
+          "referrer": "User A",
+          "commission_rate": "10%",
+          "reward_amount": 100.00
+        },
+        {
+          "level": 2,
+          "referrer": "User B",
+          "commission_rate": "5%",
+          "reward_amount": 50.00
+        },
+        {
+          "level": 3,
+          "referrer": "User C",
+          "commission_rate": "2%",
+          "reward_amount": 20.00
+        },
+        {
+          "level": 4,
+          "referrer": "User D",
+          "commission_rate": "1%",
+          "reward_amount": 10.00
+        }
+      ],
+      "total_rewards_distributed": 180.00,
+      "remaining_for_platform": 820.00
+    },
+    "error_handling": {
+      "invalid_referral_code": {
+        "error": "Referral code not found or inactive",
+        "response": "Return 400 Bad Request with error message"
+      },
+      "user_already_referred": {
+        "error": "User already has a referrer",
+        "response": "Return 400 Bad Request"
+      },
+      "no_referrer": {
+        "error": "User has no referrer",
+        "response": "Skip reward distribution"
+      },
+      "invalid_amount": {
+        "error": "Amount is not a positive number",
+        "response": "Return 400 Bad Request"
+      },
+      "database_error": {
+        "error": "Database operation failed",
+        "response": "Return 500 Internal Server Error"
+      }
+    },
+    "security_measures": {
+      "referral_code_validation": "All codes validated before use",
+      "duplicate_prevention": "Users can only have one referrer",
+      "amount_validation": "All amounts validated before processing",
+      "status_tracking": "All rewards have status tracking",
+      "level_limitation": "Commission capped at 4 levels"
+    }
+  }
+}

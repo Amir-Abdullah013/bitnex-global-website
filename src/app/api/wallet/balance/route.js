@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import databaseHelpers from '../../../../lib/database';
 
 export async function GET(request) {
   try {
@@ -12,18 +13,35 @@ export async function GET(request) {
       );
     }
 
-    // Return mock wallet data to prevent infinite loading
-    const mockWallet = {
-      success: true,
-      usdBalance: 5000 + Math.random() * 2000,
-      bnxBalance: 1000000 + Math.random() * 500000,
-      bnxPrice: 0.0035 + (Math.random() - 0.5) * 0.001
-    };
+    console.log('🔍 Fetching wallet balance for user:', userId);
 
-    return NextResponse.json(mockWallet);
+    // Get user from database
+    const user = await databaseHelpers.user.getUserById(userId);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get current BNX price from database
+    const bnxPrice = await databaseHelpers.market.getCurrentPrice('BNX');
+    
+    // Get user's wallet balances
+    const usdBalance = user.usdBalance || 0;
+    const bnxBalance = user.bnxBalance || 0;
+
+    console.log('🔍 Wallet data:', { usdBalance, bnxBalance, bnxPrice });
+
+    return NextResponse.json({
+      success: true,
+      usdBalance,
+      bnxBalance,
+      bnxPrice: bnxPrice || 0.0035
+    });
 
   } catch (error) {
-    console.error('Error fetching wallet balance:', error);
+    console.error('❌ Error fetching wallet balance:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch wallet balance' },
       { status: 500 }

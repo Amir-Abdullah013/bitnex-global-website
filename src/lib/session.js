@@ -5,7 +5,7 @@ import { cookies } from 'next/headers.js';
 let mockUserCache = null;
 let roleCache = new Map(); // Cache for user roles
 
-// Server-side session management
+// Server-side session management - IMPROVED VERSION
 export async function getServerSession() {
   try {
     const cookieStore = await cookies();
@@ -49,15 +49,18 @@ export async function getServerSession() {
     // For development/testing purposes, return a cached mock user only if no real session
     if (process.env.NODE_ENV === 'development') {
       if (!mockUserCache) {
-        console.log('🔧 Development mode: using mock user');
+        console.log('🔧 Development mode: using mock admin user');
         mockUserCache = {
-          id: '1f1fffe0-3e3b-40cb-a8e1-3be943a186fd', // Use real user ID for testing
+          id: '1f1fffe0-3e3b-40cb-a8e1-3be943a186fd',
           name: 'Amir Abdullah',
           email: 'amirabdullah2508@gmail.com',
+          role: 'ADMIN',
+          status: 'active',
+          emailVerified: true,
           user_metadata: { role: 'admin' }
         };
       }
-      console.log('✅ Development mock user returned:', mockUserCache.email);
+      console.log('✅ Development mock admin user returned:', mockUserCache.email);
       return mockUserCache;
     }
 
@@ -83,11 +86,14 @@ export async function getServerSession() {
     // For development/testing purposes, return a cached mock user if everything fails
     if (process.env.NODE_ENV === 'development') {
       if (!mockUserCache) {
-        console.log('🔧 Fallback: using mock user for development');
+        console.log('🔧 Fallback: using mock admin user for development');
         mockUserCache = {
-          id: '1f1fffe0-3e3b-40cb-a8e1-3be943a186fd', // Use real user ID for testing
+          id: '1f1fffe0-3e3b-40cb-a8e1-3be943a186fd',
           name: 'Amir Abdullah',
           email: 'amirabdullah2508@gmail.com',
+          role: 'ADMIN',
+          status: 'active',
+          emailVerified: true,
           user_metadata: { role: 'admin' }
         };
       }
@@ -98,7 +104,7 @@ export async function getServerSession() {
   }
 }
 
-// Get user role from session - SIMPLIFIED VERSION
+// Get user role from session - IMPROVED VERSION
 export async function getUserRole(user) {
   if (!user) return 'USER';
 
@@ -109,6 +115,15 @@ export async function getUserRole(user) {
   }
 
   try {
+    // For development mode, check if user has admin role in metadata
+    if (process.env.NODE_ENV === 'development') {
+      if (user.user_metadata?.role === 'admin' || user.role === 'ADMIN') {
+        console.log(`✅ Development admin role found: ${user.email} -> ADMIN`);
+        roleCache.set(cacheKey, 'ADMIN');
+        return 'ADMIN';
+      }
+    }
+
     // ALWAYS check database first - this is the source of truth
     const { databaseHelpers } = await import('./database.js');
     const dbUser = await databaseHelpers.user.getUserByEmail(user.email);
@@ -118,6 +133,13 @@ export async function getUserRole(user) {
       roleCache.set(cacheKey, role);
       console.log(`✅ Database role found: ${user.email} -> ${role}`);
       return role;
+    }
+    
+    // If no database user found, check if it's a development admin
+    if (process.env.NODE_ENV === 'development' && user.email === 'amirabdullah2508@gmail.com') {
+      console.log(`✅ Development admin user: ${user.email} -> ADMIN`);
+      roleCache.set(cacheKey, 'ADMIN');
+      return 'ADMIN';
     }
     
     // If no database user found, don't create one automatically

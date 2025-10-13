@@ -6,13 +6,10 @@ import EnhancedNavbar from './EnhancedNavbar';
 export default function ConditionalNavbar() {
   const pathname = usePathname();
   
-  // Hide navbar on auth pages, landing page, and user pages
+  // Hide navbar only on auth pages and landing page
   const hideNavbar = 
     pathname?.startsWith('/auth/') || 
-    pathname === '/' ||
-    pathname?.startsWith('/user/') ||
-    pathname?.startsWith('/admin/') ||
-    pathname?.startsWith('/plans');
+    pathname === '/';
   
   if (hideNavbar) {
     return null;

@@ -1,24 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getServerSession, getUserRole } from '../../../../../lib/session';
+import { withAdminAuth } from '../../../../../lib/api-wrapper';
 import { databaseHelpers } from '../../../../../lib/database';
 
-export async function GET(request, { params }) {
+export const GET = withAdminAuth(async (request, { params }) => {
   try {
-    const session = await getServerSession();
-    if (!session?.id) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const userRole = await getUserRole(session);
-    if (userRole !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
 
     const withdrawalId = params.id;
     const transaction = await databaseHelpers.transaction.getTransactionById(withdrawalId);
@@ -42,25 +27,10 @@ export async function GET(request, { params }) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function PATCH(request, { params }) {
+export const PATCH = withAdminAuth(async (request, { params }) => {
   try {
-    const session = await getServerSession();
-    if (!session?.id) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const userRole = await getUserRole(session);
-    if (userRole !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
 
     const withdrawalId = params.id;
     const { action, adminNotes } = await request.json();
@@ -137,7 +107,7 @@ export async function PATCH(request, { params }) {
       { status: 500 }
     );
   }
-}
+});
 
 
 

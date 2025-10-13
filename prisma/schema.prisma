@@ -42,6 +42,12 @@ model User {
   marketingEmails        Boolean @default(false)
   securityAlerts         Boolean @default(true)
 
+  // Referral system fields
+  referralCode     String?  @unique // User's unique referral code (e.g., BNX123)
+  referredBy       String?  // Referral code of the user who referred this user
+  referralLevel    Int?     @default(0) // Level in referral hierarchy (0 = no referrer, 1 = direct, 2 = indirect, etc.)
+  referralEarnings Float   @default(0) // Total earnings from referrals
+
   // Relations
   wallet         Wallet?
   transactions   Transaction[]
@@ -59,6 +65,15 @@ model User {
   sellTrades     Trade[] @relation("SellerTrades")
   portfolio      Portfolio?
   investments    Investment[]
+  
+  // Referral relations
+  referrals      Referral[] @relation("ReferrerReferrals") // Users referred by this user
+  referredUsers  Referral[] @relation("ReferredUser") // Users who referred this user
+  referrer       User?      @relation("UserReferrer", fields: [referredBy], references: [referralCode])
+  referredByUsers User[]    @relation("UserReferrer") // Users who were referred by this user
+  referralRewards ReferralReward[] // Rewards earned from referrals
+  referralTransactionsFrom ReferralTransaction[] @relation("ReferralTransactionFrom") // Transactions triggered by this user
+  referralTransactionsTo   ReferralTransaction[] @relation("ReferralTransactionTo") // Transactions received by this user
 
   @@map("users")
 }
@@ -594,6 +609,80 @@ model Otp {
   createdAt DateTime @default(now())
   
   @@map("otps")
+}
+
+// Referral System Models
+model Referral {
+  id            String   @id @default(cuid())
+  referrerId    String   // User who made the referral
+  referredId    String   // User who was referred
+  referralCode  String   // Referral code used
+  level         Int      // Level in hierarchy (1 = direct, 2 = indirect, etc.)
+  status        ReferralStatus @default(ACTIVE)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  referrer      User     @relation("ReferrerReferrals", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred      User     @relation("ReferredUser", fields: [referredId], references: [id], onDelete: Cascade)
+  rewards       ReferralReward[]
+
+  @@unique([referrerId, referredId])
+  @@map("referrals")
+}
+
+model ReferralReward {
+  id            String   @id @default(cuid())
+  userId        String   // User who earned the reward
+  referralId    String?  // Associated referral
+  amount        Float    // Reward amount
+  percentage    Float    // Commission percentage applied
+  sourceType    RewardSourceType // What action triggered the reward
+  sourceId      String?  // ID of the source transaction/action
+  level         Int      // Level in referral chain (1-4)
+  status        RewardStatus @default(PENDING)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referral      Referral? @relation(fields: [referralId], references: [id], onDelete: SetNull)
+
+  @@map("referral_rewards")
+}
+
+enum ReferralStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum RewardSourceType {
+  DEPOSIT
+  TRADE
+  INVESTMENT
+  STAKING
+}
+
+enum RewardStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model ReferralTransaction {
+  id        String   @id @default(cuid())
+  fromUserId String  // User who triggered the reward
+  toUserId   String  // User who received the reward
+  amount     Float   // Reward amount
+  level      Int     // Level in referral chain
+  createdAt  DateTime @default(now())
+
+  // Relations
+  fromUser   User    @relation("ReferralTransactionFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User    @relation("ReferralTransactionTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@map("referral_transactions")
 }
 
 

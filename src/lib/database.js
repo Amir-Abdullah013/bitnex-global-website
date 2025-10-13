@@ -123,14 +123,38 @@ export const databaseHelpers = {
 
     async createUser(userData) {
       try {
-        const { email, password, name, emailVerified = false, role = 'USER' } = userData;
+        const { email, password, name, emailVerified = false, role = 'USER', referralCode = null, referredBy = null } = userData;
         const id = randomUUID();
         
+        // Generate unique referral code if not provided
+        const userReferralCode = referralCode || `BNX${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+        
+        // Determine referral level
+        let referralLevel = 0;
+        if (referredBy) {
+          // Get the referrer's level and add 1
+          const referrerResult = await pool.query('SELECT "referralLevel" FROM users WHERE "referralCode" = $1', [referredBy]);
+          if (referrerResult.rows.length > 0) {
+            referralLevel = (referrerResult.rows[0].referralLevel || 0) + 1;
+          }
+        }
+        
         const result = await pool.query(`
-          INSERT INTO users (id, email, password, name, "emailVerified", role, "createdAt", "updatedAt")
-          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+          INSERT INTO users (id, email, password, name, "emailVerified", role, "referralCode", "referredBy", "referralLevel", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
           RETURNING *
-        `, [id, email, password, name, emailVerified, role]);
+        `, [id, email, password, name, emailVerified, role, userReferralCode, referredBy, referralLevel]);
+        
+        // If user was referred, create referral record
+        if (referredBy) {
+          const referrerResult = await pool.query('SELECT id FROM users WHERE "referralCode" = $1', [referredBy]);
+          if (referrerResult.rows.length > 0) {
+            await pool.query(`
+              INSERT INTO referrals (id, "referrerId", "referredId", "referralCode", level, status, "createdAt", "updatedAt")
+              VALUES ($1, $2, $3, $4, $5, 'ACTIVE', NOW(), NOW())
+            `, [randomUUID(), referrerResult.rows[0].id, id, referredBy, referralLevel]);
+          }
+        }
         
         return result.rows[0];
       } catch (error) {
@@ -1468,6 +1492,609 @@ export const databaseHelpers = {
           totalStaked: 0,
           totalRewards: 0
         };
+      }
+    }
+  },
+
+  // Admin logs database helpers
+  admin: {
+    async getAdminLogs(queryParams = {}) {
+      try {
+        const {
+          page = 1,
+          limit = 20,
+          search = '',
+          admin = '',
+          action = '',
+          severity = ''
+        } = queryParams;
+
+        const offset = (page - 1) * limit;
+        
+        // Build WHERE clause
+        let whereConditions = [];
+        let params = [];
+        let paramCount = 0;
+
+        if (search) {
+          paramCount++;
+          whereConditions.push(`(
+            action ILIKE $${paramCount} OR 
+            details ILIKE $${paramCount} OR 
+            message ILIKE $${paramCount} OR 
+            "adminName" ILIKE $${paramCount}
+          )`);
+          params.push(`%${search}%`);
+        }
+
+        if (admin && admin !== 'all') {
+          paramCount++;
+          whereConditions.push(`"adminId" = $${paramCount}`);
+          params.push(admin);
+        }
+
+        if (action && action !== 'all') {
+          paramCount++;
+          whereConditions.push(`action ILIKE $${paramCount}`);
+          params.push(`%${action}%`);
+        }
+
+        if (severity && severity !== 'all') {
+          paramCount++;
+          whereConditions.push(`severity = $${paramCount}`);
+          params.push(severity);
+        }
+
+        const whereClause = whereConditions.length > 0 
+          ? `WHERE ${whereConditions.join(' AND ')}`
+          : '';
+
+        // Get logs with pagination
+        const logsQuery = `
+          SELECT 
+            id,
+            action,
+            "actionType",
+            "adminId",
+            "adminName",
+            "adminEmail",
+            "targetType",
+            "targetId",
+            severity,
+            details,
+            message,
+            "ipAddress",
+            "createdAt"
+          FROM admin_logs 
+          ${whereClause}
+          ORDER BY "createdAt" DESC
+          LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+        `;
+
+        // Get total count
+        const countQuery = `
+          SELECT COUNT(*) as total
+          FROM admin_logs 
+          ${whereClause}
+        `;
+
+        const [logsResult, countResult] = await Promise.all([
+          pool.query(logsQuery, [...params, limit, offset]),
+          pool.query(countQuery, params)
+        ]);
+
+        const total = parseInt(countResult.rows[0].total);
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+          logs: logsResult.rows,
+          pagination: {
+            total,
+            totalPages,
+            currentPage: page,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+          }
+        };
+      } catch (error) {
+        console.error('Error getting admin logs:', error);
+        throw error;
+      }
+    },
+
+    async getAdminLogStats() {
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+
+        const result = await pool.query(`
+          SELECT 
+            COUNT(*) as total,
+            COUNT(CASE WHEN "createdAt" >= $1 THEN 1 END) as today,
+            COUNT(CASE WHEN "createdAt" >= $2 THEN 1 END) as this_week,
+            COUNT(CASE WHEN severity = 'CRITICAL' THEN 1 END) as critical,
+            COUNT(CASE WHEN severity = 'WARNING' THEN 1 END) as warnings,
+            COUNT(CASE WHEN severity = 'INFO' THEN 1 END) as info
+          FROM admin_logs
+        `, [today, weekAgo]);
+
+        const stats = result.rows[0];
+        return {
+          total: parseInt(stats.total),
+          today: parseInt(stats.today),
+          thisWeek: parseInt(stats.this_week),
+          critical: parseInt(stats.critical),
+          warnings: parseInt(stats.warnings),
+          info: parseInt(stats.info)
+        };
+      } catch (error) {
+        console.error('Error getting admin log stats:', error);
+        throw error;
+      }
+    },
+
+    async getAdminLogFilters() {
+      try {
+        // Get unique admins
+        const adminsResult = await pool.query(`
+          SELECT DISTINCT "adminId", "adminName", "adminEmail"
+          FROM admin_logs 
+          WHERE "adminId" IS NOT NULL
+          ORDER BY "adminName"
+        `);
+
+        // Get unique actions
+        const actionsResult = await pool.query(`
+          SELECT DISTINCT action
+          FROM admin_logs 
+          WHERE action IS NOT NULL
+          ORDER BY action
+        `);
+
+        return {
+          admins: adminsResult.rows,
+          actions: actionsResult.rows.map(row => row.action)
+        };
+      } catch (error) {
+        console.error('Error getting admin log filters:', error);
+        throw error;
+      }
+    },
+
+    async createAdminLog(logData) {
+      try {
+        const {
+          adminId,
+          adminName,
+          adminEmail,
+          action,
+          actionType,
+          targetType,
+          targetId,
+          severity = 'INFO',
+          details,
+          message,
+          ipAddress
+        } = logData;
+
+        const result = await pool.query(`
+          INSERT INTO admin_logs (
+            id,
+            action,
+            "actionType",
+            "adminId",
+            "adminName",
+            "adminEmail",
+            "targetType",
+            "targetId",
+            severity,
+            details,
+            message,
+            "ipAddress",
+            "createdAt"
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()
+          ) RETURNING *
+        `, [
+          randomUUID(),
+          action,
+          actionType,
+          adminId,
+          adminName,
+          adminEmail,
+          targetType,
+          targetId,
+          severity,
+          details,
+          message,
+          ipAddress
+        ]);
+
+        console.log('✅ Admin log created:', result.rows[0]);
+        return result.rows[0];
+      } catch (error) {
+        console.error('Error creating admin log:', error);
+        throw error;
+      }
+    }
+  },
+
+  // Referral system operations
+  referral: {
+    async getUserReferralSummary(userId) {
+      try {
+        // Get user's referral code and basic info
+        const userResult = await pool.query(`
+          SELECT "referralCode", "referralEarnings", "referralLevel" 
+          FROM users WHERE id = $1
+        `, [userId]);
+        
+        if (userResult.rows.length === 0) {
+          return null;
+        }
+        
+        const user = userResult.rows[0];
+        
+        // Get total referrals count
+        const referralsResult = await pool.query(`
+          SELECT COUNT(*) as total_referrals
+          FROM referrals 
+          WHERE "referrerId" = $1 AND status = 'ACTIVE'
+        `, [userId]);
+        
+        // Get total earnings from referral rewards
+        const earningsResult = await pool.query(`
+          SELECT COALESCE(SUM(amount), 0) as total_earnings
+          FROM referral_rewards 
+          WHERE "userId" = $1 AND status = 'PAID'
+        `, [userId]);
+        
+        // Get referral tree (direct referrals)
+        const treeResult = await pool.query(`
+          SELECT r.id, r."referredId", r.level, r."createdAt",
+                 u.name, u.email, u."referralCode"
+          FROM referrals r
+          JOIN users u ON r."referredId" = u.id
+          WHERE r."referrerId" = $1 AND r.status = 'ACTIVE'
+          ORDER BY r."createdAt" DESC
+        `, [userId]);
+        
+        return {
+          referralCode: user.referralCode,
+          totalReferrals: parseInt(referralsResult.rows[0].total_referrals),
+          totalEarnings: parseFloat(earningsResult.rows[0].total_earnings),
+          referralLevel: user.referralLevel,
+          referralTree: treeResult.rows
+        };
+      } catch (error) {
+        console.error('Error getting user referral summary:', error);
+        throw error;
+      }
+    },
+
+    async getReferralChain(userId, maxLevel = 4) {
+      try {
+        const chain = [];
+        let currentUserId = userId;
+        let level = 0;
+        
+        while (level < maxLevel) {
+          const result = await pool.query(`
+            SELECT u.id, u.name, u.email, u."referralCode", u."referralLevel"
+            FROM users u
+            WHERE u.id = $1
+          `, [currentUserId]);
+          
+          if (result.rows.length === 0) break;
+          
+          const user = result.rows[0];
+          chain.push({
+            level: level + 1,
+            userId: user.id,
+            name: user.name,
+            email: user.email,
+            referralCode: user.referralCode,
+            referralLevel: user.referralLevel
+          });
+          
+          // Get the referrer of current user
+          const referrerResult = await pool.query(`
+            SELECT "referrerId" FROM referrals 
+            WHERE "referredId" = $1 AND status = 'ACTIVE'
+          `, [currentUserId]);
+          
+          if (referrerResult.rows.length === 0) break;
+          
+          currentUserId = referrerResult.rows[0].referrerId;
+          level++;
+        }
+        
+        return chain;
+      } catch (error) {
+        console.error('Error getting referral chain:', error);
+        throw error;
+      }
+    },
+
+    async distributeReferralRewards(userId, amount, sourceType, sourceId) {
+      try {
+        const referralChain = await this.getReferralChain(userId, 4);
+        const rewards = [];
+        
+        // Commission percentages for each level
+        const commissionRates = [0.10, 0.05, 0.02, 0.01]; // 10%, 5%, 2%, 1%
+        
+        for (let i = 0; i < referralChain.length && i < 4; i++) {
+          const referrer = referralChain[i];
+          const commissionRate = commissionRates[i];
+          const rewardAmount = amount * commissionRate;
+          
+          if (rewardAmount > 0) {
+            // Create reward record
+            const rewardId = randomUUID();
+            await pool.query(`
+              INSERT INTO referral_rewards (
+                id, "userId", amount, percentage, "sourceType", "sourceId", 
+                level, status, "createdAt", "updatedAt"
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', NOW(), NOW())
+            `, [rewardId, referrer.userId, rewardAmount, commissionRate * 100, sourceType, sourceId, i + 1]);
+            
+            // Update user's referral earnings
+            await pool.query(`
+              UPDATE users 
+              SET "referralEarnings" = "referralEarnings" + $1, "updatedAt" = NOW()
+              WHERE id = $2
+            `, [rewardAmount, referrer.userId]);
+            
+            // Update user's wallet balance
+            await pool.query(`
+              UPDATE wallets 
+              SET balance = balance + $1, "lastUpdated" = NOW(), "updatedAt" = NOW()
+              WHERE "userId" = $2
+            `, [rewardAmount, referrer.userId]);
+            
+            // Create transaction record for the reward
+            await pool.query(`
+              INSERT INTO transactions (
+                id, "userId", type, amount, currency, status, description, 
+                "createdAt", "updatedAt"
+              ) VALUES ($1, $2, 'DEPOSIT', $3, 'USD', 'COMPLETED', 
+                'Referral reward from ${sourceType.toLowerCase()}', NOW(), NOW())
+            `, [randomUUID(), referrer.userId, rewardAmount]);
+            
+            rewards.push({
+              userId: referrer.userId,
+              amount: rewardAmount,
+              percentage: commissionRate * 100,
+              level: i + 1
+            });
+          }
+        }
+        
+        return rewards;
+      } catch (error) {
+        console.error('Error distributing referral rewards:', error);
+        throw error;
+      }
+    },
+
+    async getReferralRewards(userId, limit = 20) {
+      try {
+        const result = await pool.query(`
+          SELECT rr.*, u.name as "referrerName", u.email as "referrerEmail"
+          FROM referral_rewards rr
+          LEFT JOIN referrals r ON rr."referralId" = r.id
+          LEFT JOIN users u ON r."referrerId" = u.id
+          WHERE rr."userId" = $1
+          ORDER BY rr."createdAt" DESC
+          LIMIT $2
+        `, [userId, limit]);
+        
+        return result.rows;
+      } catch (error) {
+        console.error('Error getting referral rewards:', error);
+        return [];
+      }
+    },
+
+    async validateReferralCode(referralCode) {
+      try {
+        const result = await pool.query(`
+          SELECT id, name, email, "referralCode" 
+          FROM users 
+          WHERE "referralCode" = $1 AND status = 'active'
+        `, [referralCode]);
+        
+        return result.rows[0] || null;
+      } catch (error) {
+        console.error('Error validating referral code:', error);
+        return null;
+      }
+    }
+  },
+
+  // Market data helpers
+  market: {
+    async getCurrentPrice(symbol) {
+      try {
+        const result = await pool.query(`
+          SELECT price FROM prices 
+          WHERE symbol = $1 
+          ORDER BY timestamp DESC 
+          LIMIT 1
+        `, [symbol]);
+        
+        return result.rows[0]?.price || null;
+      } catch (error) {
+        console.error('Error getting current price:', error);
+        return null;
+      }
+    },
+
+    async getPriceAtTime(symbol, timestamp) {
+      try {
+        const result = await pool.query(`
+          SELECT price FROM prices 
+          WHERE symbol = $1 AND timestamp <= $2
+          ORDER BY timestamp DESC 
+          LIMIT 1
+        `, [symbol, timestamp]);
+        
+        return result.rows[0]?.price || null;
+      } catch (error) {
+        console.error('Error getting price at time:', error);
+        return null;
+      }
+    },
+
+    async get24hVolume(symbol) {
+      try {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const result = await pool.query(`
+          SELECT SUM(volume) as total_volume FROM prices 
+          WHERE symbol = $1 AND timestamp >= $2
+        `, [symbol, yesterday]);
+        
+        return result.rows[0]?.total_volume || 0;
+      } catch (error) {
+        console.error('Error getting 24h volume:', error);
+        return 0;
+      }
+    },
+
+    async get24hHigh(symbol) {
+      try {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const result = await pool.query(`
+          SELECT MAX(price) as high_price FROM prices 
+          WHERE symbol = $1 AND timestamp >= $2
+        `, [symbol, yesterday]);
+        
+        return result.rows[0]?.high_price || null;
+      } catch (error) {
+        console.error('Error getting 24h high:', error);
+        return null;
+      }
+    },
+
+    async get24hLow(symbol) {
+      try {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const result = await pool.query(`
+          SELECT MIN(price) as low_price FROM prices 
+          WHERE symbol = $1 AND timestamp >= $2
+        `, [symbol, yesterday]);
+        
+        return result.rows[0]?.low_price || null;
+      } catch (error) {
+        console.error('Error getting 24h low:', error);
+        return null;
+      }
+    }
+  },
+
+  // Portfolio helpers
+  portfolio: {
+    async getUserPortfolio(userId) {
+      try {
+        const result = await pool.query(`
+          SELECT 
+            id,
+            "userId",
+            "totalValue",
+            "totalInvested",
+            "totalProfit",
+            "profitPercentage",
+            "lastUpdated"
+          FROM portfolios 
+          WHERE "userId" = $1
+        `, [userId]);
+        
+        return result.rows[0] || null;
+      } catch (error) {
+        console.error('Error getting user portfolio:', error);
+        return null;
+      }
+    },
+
+    async getPortfolioMetrics(userId) {
+      try {
+        const result = await pool.query(`
+          SELECT 
+            COUNT(*) as trade_count,
+            SUM(amount) as total_volume,
+            SUM(fee) as total_fees,
+            AVG(amount) as avg_trade_size
+          FROM transactions 
+          WHERE "userId" = $1 AND status = 'completed'
+        `, [userId]);
+        
+        return result.rows[0] || {};
+      } catch (error) {
+        console.error('Error getting portfolio metrics:', error);
+        return {};
+      }
+    }
+  },
+
+  // Investment helpers
+  investment: {
+    async getUserInvestments(userId) {
+      try {
+        const result = await pool.query(`
+          SELECT 
+            id,
+            "planName",
+            amount,
+            status,
+            "expectedReturn",
+            "actualReturn",
+            "createdAt"
+          FROM investments 
+          WHERE "userId" = $1
+          ORDER BY "createdAt" DESC
+        `, [userId]);
+        
+        return result.rows || [];
+      } catch (error) {
+        console.error('Error getting user investments:', error);
+        return [];
+      }
+    }
+  },
+
+  // Trade helpers
+  trade: {
+    async getUserRecentTrades(userId, limit = 5) {
+      try {
+        const result = await pool.query(`
+          SELECT 
+            id,
+            price,
+            amount,
+            side,
+            timestamp,
+            "buyerId",
+            "sellerId"
+          FROM trades 
+          WHERE "buyerId" = $1 OR "sellerId" = $1
+          ORDER BY timestamp DESC
+          LIMIT $2
+        `, [userId, limit]);
+        
+        return result.rows || [];
+      } catch (error) {
+        console.error('Error getting user recent trades:', error);
+        return [];
       }
     }
   }

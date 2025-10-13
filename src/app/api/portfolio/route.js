@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession, getUserRole } from '../../../lib/session';
 import { handleApiError, handleAuthError } from '../error-handler';
+import databaseHelpers from '../../../lib/database';
 
 /**
  * GET /api/portfolio - Get user's portfolio data
@@ -18,65 +19,35 @@ export async function GET(request) {
 
     console.log('🔍 User ID:', session.id);
     
-    // Return mock portfolio data to prevent infinite loading
-    const mockPortfolio = {
-      id: 1,
-      userId: session.id,
-      totalValue: 10000 + Math.random() * 5000,
-      totalInvested: 8000 + Math.random() * 2000,
-      totalProfit: 2000 + Math.random() * 1000,
-      profitPercentage: 15 + Math.random() * 10,
-      lastUpdated: new Date()
-    };
+    // Get real portfolio data from database
+    const portfolio = await databaseHelpers.portfolio.getUserPortfolio(session.id);
+    
+    if (!portfolio) {
+      return NextResponse.json({
+        success: false,
+        error: 'Portfolio not found'
+      }, { status: 404 });
+    }
 
-    const mockInvestments = [
-      {
-        id: 1,
-        planName: 'Premium Plan',
-        amount: 5000,
-        status: 'ACTIVE',
-        createdAt: new Date(),
-        expectedReturn: 500,
-        actualReturn: 450
-      },
-      {
-        id: 2,
-        planName: 'Standard Plan',
-        amount: 3000,
-        status: 'COMPLETED',
-        createdAt: new Date(),
-        expectedReturn: 300,
-        actualReturn: 320
-      }
-    ];
+    console.log('🔍 Portfolio data:', portfolio);
 
-    const mockMetrics = {
-      totalVolume: 50000,
-      totalFees: 250,
-      tradeCount: 15,
-      avgTradeSize: 3333
-    };
+    // Get user's investments
+    const investments = await databaseHelpers.investment.getUserInvestments(session.id);
+    
+    // Get portfolio metrics
+    const metrics = await databaseHelpers.portfolio.getPortfolioMetrics(session.id);
+    
+    // Get recent trades
+    const recentTrades = await databaseHelpers.trade.getUserRecentTrades(session.id, 5);
 
-    const mockRecentTrades = [
-      {
-        id: 1,
-        price: 0.0035,
-        amount: 1000,
-        side: 'BUY',
-        timestamp: new Date(),
-        buyerId: session.id,
-        sellerId: 'user_123'
-      }
-    ];
-
-    console.log('🔍 Returning mock portfolio data');
+    console.log('🔍 Returning real portfolio data');
 
     return NextResponse.json({
       success: true,
-      portfolio: mockPortfolio,
-      investments: mockInvestments,
-      metrics: mockMetrics,
-      recentTrades: mockRecentTrades
+      portfolio: portfolio,
+      investments: investments || [],
+      metrics: metrics || {},
+      recentTrades: recentTrades || []
     });
 
   } catch (error) {

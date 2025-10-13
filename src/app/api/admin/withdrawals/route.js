@@ -1,24 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getServerSession, getUserRole } from '../../../../lib/session';
+import { withAdminAuth } from '../../../../lib/api-wrapper';
 import { databaseHelpers } from '../../../../lib/database';
 
-export async function GET(request) {
+export const GET = withAdminAuth(async (request) => {
   try {
     console.log('🔍 Admin withdrawals API called');
-    
-    const session = await getServerSession();
-    console.log('🔍 Session for admin withdrawals:', session ? { id: session.id, email: session.email } : 'No session');
-    
-    if (!session?.id) {
-      console.log('❌ No session found for admin withdrawals');
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    // For development purposes, allow any authenticated user to access admin endpoints
-    console.log('✅ Allowing access to admin withdrawals for development');
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
@@ -66,5 +52,5 @@ export async function GET(request) {
       { status: 500 }
     );
   }
-}
+});
 

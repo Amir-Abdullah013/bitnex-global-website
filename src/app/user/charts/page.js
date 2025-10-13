@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth-context';
+import { initializeAuth } from '../../../lib/auth-helper';
 import { TradingPairProvider } from '../../../lib/trading-pair-context';
 import Layout from '../../../components/Layout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
@@ -10,24 +11,39 @@ import AdvancedChart from '../../../components/AdvancedChart';
 import Button from '../../../components/Button';
 
 export default function ChartsPage() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   // Initialize component
   useEffect(() => {
     setMounted(true);
+    initializeAuth();
   }, []);
 
-  // Redirect if not authenticated
+  // Authentication check with fallback
   useEffect(() => {
-    if (mounted && !loading && !isAuthenticated) {
-      router.push('/auth/signin?redirect=/user/charts');
+    if (mounted && !isLoading) {
+      console.log('🔍 Charts page auth check:', { isAuthenticated, user: !!user, isLoading });
+      
+      // Check if user has a session in localStorage (fallback check)
+      const userSession = localStorage.getItem('userSession');
+      const hasLocalSession = userSession && JSON.parse(userSession);
+      
+      console.log('🔍 Local session check:', { hasLocalSession: !!hasLocalSession });
+      
+      // Only redirect if we're absolutely sure there's no authentication
+      // AND they don't have a local session
+      if (!isAuthenticated && !user && !hasLocalSession) {
+        console.log('⚠️ No authentication found, redirecting to signin');
+        router.push('/auth/signin?redirect=/user/charts');
+        return;
+      }
     }
-  }, [mounted, loading, isAuthenticated, router]);
+  }, [mounted, isLoading, isAuthenticated, user, router]);
 
   // Show loading state
-  if (!mounted || loading) {
+  if (!mounted || isLoading) {
     return (
       <Layout showSidebar={true}>
         <div className="min-h-screen bg-binance-background flex items-center justify-center">
@@ -40,18 +56,23 @@ export default function ChartsPage() {
     );
   }
 
-  // Show loading state if not authenticated
-  if (!isAuthenticated || !user) {
-    return (
-      <Layout showSidebar={true}>
-        <div className="min-h-screen bg-binance-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-binance-primary mx-auto mb-4"></div>
-            <p className="text-binance-textSecondary">Redirecting to sign in...</p>
+  // Show loading state if not authenticated (with fallback check)
+  if (!isAuthenticated && !user && !isLoading && mounted) {
+    const userSession = localStorage.getItem('userSession');
+    const hasLocalSession = userSession && JSON.parse(userSession);
+    
+    if (!hasLocalSession) {
+      return (
+        <Layout showSidebar={true}>
+          <div className="min-h-screen bg-binance-background flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-binance-primary mx-auto mb-4"></div>
+              <p className="text-binance-textSecondary">Redirecting to sign in...</p>
+            </div>
           </div>
-        </div>
-      </Layout>
-    );
+        </Layout>
+      );
+    }
   }
 
   return (

@@ -141,3 +141,4 @@ The new Bitnex Global theme features:
 All rebranding has been completed successfully with full backward compatibility maintained for core functionality.
 
 
+

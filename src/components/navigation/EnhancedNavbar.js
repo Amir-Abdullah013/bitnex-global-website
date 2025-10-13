@@ -20,23 +20,64 @@ import {
   X,
   Activity,
   Star,
-  DollarSign
+  DollarSign,
+  LogOut,
+  LogIn,
+  Users
 } from 'lucide-react';
 import { connectToMultipleSymbols, disconnectFromAllSymbols } from '../../lib/binanceSocket';
+import { useAuth } from '../../lib/auth-context';
 
 const EnhancedNavbar = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, isAuthenticated, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [fallbackAuth, setFallbackAuth] = useState(null);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
 
-  // Navigation items
-  const navItems = [
-    { id: 'home', label: 'Home', icon: Home, path: '/' },
+  // Debug authentication state and add fallback
+  useEffect(() => {
+    console.log('🔍 EnhancedNavbar Auth State:', {
+      isAuthenticated,
+      user: user ? { name: user.name, email: user.email } : null,
+      pathname
+    });
+    
+    // Fallback check for localStorage session
+    const userSession = localStorage.getItem('userSession');
+    if (userSession && !isAuthenticated) {
+      console.log('🔧 Found localStorage session but auth context not authenticated');
+      try {
+        const sessionData = JSON.parse(userSession);
+        console.log('🔧 Session data:', sessionData);
+        setFallbackAuth(sessionData);
+      } catch (e) {
+        console.error('🔧 Error parsing session data:', e);
+        setFallbackAuth(null);
+      }
+    } else {
+      setFallbackAuth(null);
+    }
+  }, [isAuthenticated, user, pathname]);
+
+  // Use fallback auth if main auth context is not working
+  const effectiveAuth = isAuthenticated || !!fallbackAuth;
+  const effectiveUser = user || fallbackAuth;
+
+  // Navigation items - conditional based on effective authentication
+  const navItems = effectiveAuth ? [
+    { id: 'dashboard', label: 'Dashboard', icon: User, path: '/user/dashboard' },
     { id: 'markets', label: 'Markets', icon: BarChart3, path: '/markets' },
     { id: 'trade', label: 'Trade', icon: TrendingUp, path: '/user/trade' },
-    { id: 'dashboard', label: 'Dashboard', icon: User, path: '/user/dashboard' }
+  ] : [
+    { id: 'home', label: 'Home', icon: Home, path: '/' },
+    { id: 'markets', label: 'Markets', icon: BarChart3, path: '/markets' }
   ];
 
   // Connect to WebSocket for live data indicator
@@ -58,9 +99,85 @@ const EnhancedNavbar = () => {
     }
   }, []);
 
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isUserMenuOpen) {
+        setIsUserMenuOpen(false);
+      }
+      if (isNotificationOpen) {
+        setIsNotificationOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen || isNotificationOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserMenuOpen, isNotificationOpen]);
+
+  // Load notifications when authenticated
+  useEffect(() => {
+    if (effectiveAuth) {
+      loadNotifications();
+    }
+  }, [effectiveAuth]);
+
   const handleNavClick = (path) => {
     router.push(path);
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsUserMenuOpen(false);
+    setIsMobileMenuOpen(false);
+    router.push('/');
+  };
+
+  const handleNotificationClick = () => {
+    setIsNotificationOpen(!isNotificationOpen);
+    setIsUserMenuOpen(false); // Close user menu if open
+  };
+
+  const loadNotifications = async () => {
+    try {
+      // Mock notifications for now - you can replace with real API call
+      const mockNotifications = [
+        {
+          id: '1',
+          title: 'Welcome to Bitnex!',
+          message: 'Your account has been successfully created.',
+          type: 'success',
+          timestamp: new Date().toISOString(),
+          read: false
+        },
+        {
+          id: '2',
+          title: 'New Trade Alert',
+          message: 'Your BTC order has been executed.',
+          type: 'info',
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          read: false
+        },
+        {
+          id: '3',
+          title: 'Security Update',
+          message: 'Please update your password for better security.',
+          type: 'warning',
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          read: true
+        }
+      ];
+      
+      setNotifications(mockNotifications);
+      setNotificationCount(mockNotifications.filter(n => !n.read).length);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
   };
 
   const isActive = (path) => {
@@ -173,23 +290,162 @@ const EnhancedNavbar = () => {
               />
             </div>
 
-            {/* Notifications */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2 text-[#B7BDC6] hover:text-[#EAECEF] hover:bg-[#181A20] rounded-lg transition-colors"
-            >
-              <Bell size={18} />
-            </motion.button>
+            {/* Authentication Section */}
+            {effectiveAuth ? (
+              <>
+                {/* Notifications */}
+                <div className="relative">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleNotificationClick}
+                    className="p-2 text-[#B7BDC6] hover:text-[#EAECEF] hover:bg-[#181A20] rounded-lg transition-colors relative"
+                  >
+                    <Bell size={18} />
+                    {notificationCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {notificationCount > 9 ? '9+' : notificationCount}
+                      </span>
+                    )}
+                  </motion.button>
 
-            {/* Settings */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2 text-[#B7BDC6] hover:text-[#EAECEF] hover:bg-[#181A20] rounded-lg transition-colors"
-            >
-              <Settings size={18} />
-            </motion.button>
+                  {/* Notification Dropdown */}
+                  {isNotificationOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-80 bg-[#181A20] border border-[#2B3139] rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
+                    >
+                      <div className="p-4 border-b border-[#2B3139]">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-[#EAECEF] font-semibold">Notifications</h3>
+                          <span className="text-[#B7BDC6] text-sm">{notifications.length} total</span>
+                        </div>
+                      </div>
+                      <div className="py-2">
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-[#B7BDC6]">
+                            <Bell size={32} className="mx-auto mb-2 opacity-50" />
+                            <p>No notifications yet</p>
+                          </div>
+                        ) : (
+                          notifications.map((notification) => (
+                            <div
+                              key={notification.id}
+                              className={`px-4 py-3 hover:bg-[#2B3139] transition-colors cursor-pointer ${
+                                !notification.read ? 'bg-[#2B3139]/50' : ''
+                              }`}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className={`w-2 h-2 rounded-full mt-2 ${
+                                  notification.type === 'success' ? 'bg-green-500' :
+                                  notification.type === 'warning' ? 'bg-yellow-500' :
+                                  notification.type === 'error' ? 'bg-red-500' :
+                                  'bg-blue-500'
+                                }`} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[#EAECEF] font-medium text-sm">
+                                    {notification.title}
+                                  </p>
+                                  <p className="text-[#B7BDC6] text-xs mt-1">
+                                    {notification.message}
+                                  </p>
+                                  <p className="text-[#B7BDC6] text-xs mt-1">
+                                    {new Date(notification.timestamp).toLocaleString()}
+                                  </p>
+                                </div>
+                                {!notification.read && (
+                                  <div className="w-2 h-2 bg-[#F0B90B] rounded-full mt-2" />
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      {notifications.length > 0 && (
+                        <div className="p-4 border-t border-[#2B3139]">
+                          <button
+                            onClick={() => {
+                              console.log('🔔 Navigating to notifications page...');
+                              setIsNotificationOpen(false);
+                              router.push('/user/notifications');
+                            }}
+                            className="w-full text-center text-[#F0B90B] hover:text-[#F0B90B]/80 text-sm font-medium"
+                          >
+                            View All Notifications
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* User Profile Dropdown */}
+                <div className="relative">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 p-2 text-[#B7BDC6] hover:text-[#EAECEF] hover:bg-[#181A20] rounded-lg transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-[#F0B90B] rounded-full flex items-center justify-center">
+                      <span className="text-[#0B0E11] font-bold text-sm">
+                        {effectiveUser?.name?.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                    <span className="hidden sm:block text-sm font-medium">{effectiveUser?.name || 'User'}</span>
+                  </motion.button>
+
+                  {/* User Dropdown Menu */}
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-48 bg-[#181A20] border border-[#2B3139] rounded-lg shadow-lg z-50"
+                    >
+                      <div className="py-2">
+                        <div className="px-4 py-2 text-sm text-[#B7BDC6] border-b border-[#2B3139]">
+                          <div className="font-medium text-[#EAECEF]">{effectiveUser?.name || 'User'}</div>
+                          <div className="text-xs text-[#B7BDC6]">{effectiveUser?.email || 'user@example.com'}</div>
+                        </div>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm text-[#B7BDC6] hover:bg-[#2B3139] hover:text-[#EAECEF] transition-colors flex items-center space-x-2"
+                        >
+                          <LogOut size={16} />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Login Button */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => router.push('/auth/signin')}
+                  className="flex items-center space-x-2 px-4 py-2 text-[#B7BDC6] hover:text-[#EAECEF] hover:bg-[#181A20] rounded-lg transition-colors"
+                >
+                  <LogIn size={18} />
+                  <span className="hidden sm:block">Sign In</span>
+                </motion.button>
+
+                {/* Register Button */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => router.push('/auth/signup')}
+                  className="bg-[#F0B90B] hover:bg-[#F0B90B]/80 text-[#0B0E11] px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Get Started
+                </motion.button>
+              </>
+            )}
 
             {/* Mobile Menu Button */}
             <motion.button
@@ -251,6 +507,63 @@ const EnhancedNavbar = () => {
                   />
                 </div>
               </div>
+
+              {/* Mobile Authentication Section */}
+              {effectiveAuth ? (
+                <div className="mt-4 pt-4 border-t border-[#1E2329]">
+                  <div className="px-4 py-2 text-sm text-[#B7BDC6]">
+                    <div className="font-medium text-[#EAECEF]">{effectiveUser?.name || 'User'}</div>
+                    <div className="text-xs text-[#B7BDC6]">{effectiveUser?.email || 'user@example.com'}</div>
+                  </div>
+                  
+                  {/* Mobile Notifications */}
+                  <button
+                    onClick={() => {
+                      router.push('/user/notifications');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-[#B7BDC6] hover:bg-[#2B3139] hover:text-[#EAECEF] transition-colors flex items-center space-x-2"
+                  >
+                    <Bell size={16} />
+                    <span>Notifications</span>
+                    {notificationCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {notificationCount > 9 ? '9+' : notificationCount}
+                      </span>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-[#B7BDC6] hover:bg-[#2B3139] hover:text-[#EAECEF] transition-colors flex items-center space-x-2"
+                  >
+                    <LogOut size={16} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-4 pt-4 border-t border-[#1E2329] space-y-2">
+                  <button
+                    onClick={() => {
+                      router.push('/auth/signin');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-[#B7BDC6] hover:bg-[#2B3139] hover:text-[#EAECEF] transition-colors flex items-center space-x-2"
+                  >
+                    <LogIn size={16} />
+                    <span>Sign In</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      router.push('/auth/signup');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-[#F0B90B] hover:bg-[#F0B90B]/80 text-[#0B0E11] px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Get Started
+                  </button>
+                </div>
+              )}
 
               {/* Mobile Live Data Indicator */}
               <div className="mt-4 pt-4 border-t border-[#1E2329]">

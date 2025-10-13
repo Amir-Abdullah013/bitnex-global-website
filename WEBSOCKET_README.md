@@ -366,3 +366,4 @@ NEXT_PUBLIC_WS_URL=wss://your-domain.com
 **Real-time trading system is now fully operational with WebSocket integration!** 🎉
 
 
+

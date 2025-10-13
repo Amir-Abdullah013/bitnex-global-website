@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../../lib/auth-context';
 import { useUniversal } from '../../../lib/universal-context';
 import Layout from '../../../components/Layout';
+import ReferralSummary from '../../../components/ReferralSummary';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -20,7 +21,8 @@ import {
   CheckCircle,
   AlertCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  RefreshCw
 } from 'lucide-react';
 
 export default function UserDashboard() {
@@ -36,49 +38,158 @@ export default function UserDashboard() {
 
   const [showBalance, setShowBalance] = useState(true);
   const [timeframe, setTimeframe] = useState('24h');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    wallet: { usdBalance: 0, bnxBalance: 0, bnxPrice: 0 },
+    market: { price: 0, change24h: 0, volume24h: 0 },
+    transactions: [],
+    portfolio: { totalValue: 0, totalInvested: 0, totalProfit: 0, profitPercentage: 0 }
+  });
 
   // Calculate total portfolio value
-  const totalPortfolioValue = usdBalance + (bnxBalance * bnxPrice);
-  const bnxValueInUsd = bnxBalance * bnxPrice;
+  const totalPortfolioValue = dashboardData.wallet.usdBalance + (dashboardData.wallet.bnxBalance * dashboardData.wallet.bnxPrice);
+  const bnxValueInUsd = dashboardData.wallet.bnxBalance * dashboardData.wallet.bnxPrice;
 
-  // Mock data for recent activities
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'buy',
-      asset: 'BNX',
-      amount: 100,
-      price: 2.45,
-      time: '2 hours ago',
-      status: 'completed'
-    },
-    {
-      id: 2,
-      type: 'sell',
-      asset: 'BNX',
-      amount: 50,
-      price: 2.48,
-      time: '5 hours ago',
-      status: 'completed'
-    },
-    {
-      id: 3,
-      type: 'deposit',
-      asset: 'USD',
-      amount: 1000,
-      time: '1 day ago',
-      status: 'completed'
+  // Fetch real data on component mount
+  useEffect(() => {
+    fetchDashboardData();
+  }, [user?.id]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const userId = user?.id || localStorage.getItem('userId') || 'demo-user-123';
+      
+      // Fetch all data in parallel
+      const [walletResponse, marketResponse, transactionsResponse, portfolioResponse] = await Promise.allSettled([
+        fetch(`/api/wallet/balance?userId=${userId}`),
+        fetch('/api/price?symbol=BNX'),
+        fetch(`/api/user/transactions?limit=5&userId=${userId}`),
+        fetch('/api/portfolio')
+      ]);
+
+      const newData = { ...dashboardData };
+
+      // Process wallet data
+      if (walletResponse.status === 'fulfilled' && walletResponse.value.ok) {
+        const walletData = await walletResponse.value.json();
+        if (walletData.success) {
+          newData.wallet = {
+            usdBalance: walletData.usdBalance || 0,
+            bnxBalance: walletData.bnxBalance || 0,
+            bnxPrice: walletData.bnxPrice || 0
+          };
+        }
+      }
+
+      // Process market data
+      if (marketResponse.status === 'fulfilled' && marketResponse.value.ok) {
+        const marketData = await marketResponse.value.json();
+        if (marketData.success) {
+          newData.market = {
+            price: marketData.price || 0,
+            change24h: marketData.change24h || 0,
+            volume24h: marketData.volume24h || 0
+          };
+        }
+      }
+
+      // Process transactions data
+      if (transactionsResponse.status === 'fulfilled' && transactionsResponse.value.ok) {
+        const transactionsData = await transactionsResponse.value.json();
+        if (transactionsData.success) {
+          newData.transactions = transactionsData.transactions || [];
+        }
+      }
+
+      // Process portfolio data
+      if (portfolioResponse.status === 'fulfilled' && portfolioResponse.value.ok) {
+        const portfolioData = await portfolioResponse.value.json();
+        if (portfolioData.success && portfolioData.portfolio) {
+          newData.portfolio = {
+            totalValue: portfolioData.portfolio.totalValue || 0,
+            totalInvested: portfolioData.portfolio.totalInvested || 0,
+            totalProfit: portfolioData.portfolio.totalProfit || 0,
+            profitPercentage: portfolioData.portfolio.profitPercentage || 0
+          };
+        }
+      }
+
+      setDashboardData(newData);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // Mock market data
+  // Market stats based on real data
   const marketStats = {
-    '24h': { change: '+5.23', percentage: '+2.34%', trend: 'up' },
-    '7d': { change: '+12.45', percentage: '+5.67%', trend: 'up' },
-    '30d': { change: '-3.21', percentage: '-1.23%', trend: 'down' }
+    '24h': { 
+      change: `+${dashboardData.market.change24h.toFixed(2)}`, 
+      percentage: `${dashboardData.market.change24h >= 0 ? '+' : ''}${dashboardData.market.change24h.toFixed(2)}%`, 
+      trend: dashboardData.market.change24h >= 0 ? 'up' : 'down' 
+    },
+    '7d': { 
+      change: '+12.45', 
+      percentage: '+5.67%', 
+      trend: 'up' 
+    },
+    '30d': { 
+      change: '-3.21', 
+      percentage: '-1.23%', 
+      trend: 'down' 
+    }
   };
 
   const currentStats = marketStats[timeframe];
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Layout showSidebar={true}>
+        <div className="min-h-screen bg-[#181A20] p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F0B90B]"></div>
+                <p className="text-[#848E9C]">Loading dashboard data...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Layout showSidebar={true}>
+        <div className="min-h-screen bg-[#181A20] p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <AlertCircle className="mx-auto text-[#F6465D] mb-4" size={48} />
+                <h2 className="text-xl font-semibold text-[#EAECEF] mb-2">Error Loading Dashboard</h2>
+                <p className="text-[#848E9C] mb-4">{error}</p>
+                <button
+                  onClick={fetchDashboardData}
+                  className="px-6 py-3 bg-[#F0B90B] hover:bg-[#F8D12F] text-[#0B0E11] font-semibold rounded-lg transition-all"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout showSidebar={true}>
@@ -96,16 +207,27 @@ export default function UserDashboard() {
               </h1>
               <p className="text-[#848E9C] mt-1">Here's what's happening with your portfolio today</p>
             </div>
-            <button
-              onClick={() => setShowBalance(!showBalance)}
-              className="p-2 hover:bg-[#1E2329] rounded-lg transition-colors"
-            >
-              {showBalance ? (
-                <Eye className="text-[#848E9C]" size={20} />
-              ) : (
-                <EyeOff className="text-[#848E9C]" size={20} />
-              )}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={fetchDashboardData}
+                disabled={loading}
+                className="p-2 hover:bg-[#1E2329] rounded-lg transition-colors disabled:opacity-50"
+                title="Refresh data"
+              >
+                <RefreshCw className={`text-[#848E9C] ${loading ? 'animate-spin' : ''}`} size={20} />
+              </button>
+              <button
+                onClick={() => setShowBalance(!showBalance)}
+                className="p-2 hover:bg-[#1E2329] rounded-lg transition-colors"
+                title={showBalance ? 'Hide balance' : 'Show balance'}
+              >
+                {showBalance ? (
+                  <Eye className="text-[#848E9C]" size={20} />
+                ) : (
+                  <EyeOff className="text-[#848E9C]" size={20} />
+                )}
+              </button>
+            </div>
           </motion.div>
 
           {/* Portfolio Overview */}
@@ -140,8 +262,8 @@ export default function UserDashboard() {
             </div>
             
             <div className="flex items-center space-x-2 text-[#1E2329]">
-              <span className="text-sm">≈ {formatBnx(totalPortfolioValue / bnxPrice)} BNX</span>
-              <span className="text-xs opacity-70">at ${bnxPrice.toFixed(2)}/BNX</span>
+              <span className="text-sm">≈ {formatBnx(totalPortfolioValue / dashboardData.wallet.bnxPrice)} BNX</span>
+              <span className="text-xs opacity-70">at ${dashboardData.wallet.bnxPrice.toFixed(2)}/BNX</span>
             </div>
           </motion.div>
 
@@ -150,7 +272,7 @@ export default function UserDashboard() {
             {[
               {
                 title: 'USD Balance',
-                value: showBalance ? formatCurrency(usdBalance, 'USD') : '••••',
+                value: showBalance ? formatCurrency(dashboardData.wallet.usdBalance, 'USD') : '••••',
                 change: '+0.00%',
                 icon: DollarSign,
                 color: '#0ECB81',
@@ -158,7 +280,7 @@ export default function UserDashboard() {
               },
               {
                 title: 'BNX Balance',
-                value: showBalance ? `${formatBnx(bnxBalance)}` : '••••',
+                value: showBalance ? `${formatBnx(dashboardData.wallet.bnxBalance)}` : '••••',
                 change: currentStats.percentage,
                 icon: Bitcoin,
                 color: '#F0B90B',
@@ -174,11 +296,11 @@ export default function UserDashboard() {
               },
               {
                 title: 'Today\'s PnL',
-                value: showBalance ? '+$' + currentStats.change : '••••',
-                change: currentStats.percentage,
+                value: showBalance ? `$${dashboardData.portfolio.totalProfit.toFixed(2)}` : '••••',
+                change: `${dashboardData.portfolio.profitPercentage >= 0 ? '+' : ''}${dashboardData.portfolio.profitPercentage.toFixed(2)}%`,
                 icon: Activity,
-                color: '#0ECB81',
-                bgColor: '#0ECB8115'
+                color: dashboardData.portfolio.totalProfit >= 0 ? '#0ECB81' : '#F6465D',
+                bgColor: dashboardData.portfolio.totalProfit >= 0 ? '#0ECB8115' : '#F6465D15'
               }
             ].map((stat, index) => {
               const Icon = stat.icon;
@@ -207,6 +329,15 @@ export default function UserDashboard() {
               );
             })}
           </div>
+
+          {/* Referral Summary */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <ReferralSummary userId={user?.id} />
+          </motion.div>
 
           {/* Quick Actions & Recent Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -275,47 +406,65 @@ export default function UserDashboard() {
               </div>
               
               <div className="space-y-3">
-                {recentActivities.map((activity, index) => {
-                  const isPositive = activity.type === 'buy' || activity.type === 'deposit';
-                  const Icon = activity.type === 'deposit' ? ArrowDownRight : 
-                               activity.type === 'buy' ? ArrowUpRight : ArrowDownRight;
-                  
-                  return (
-                    <motion.div
-                      key={activity.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.8 + index * 0.1 }}
-                      className="flex items-center justify-between p-4 bg-[#181A20] rounded-lg hover:bg-[#2B3139] transition-all group"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div 
-                          className={`p-2 rounded-lg ${isPositive ? 'bg-[#0ECB81]15' : 'bg-[#F6465D]15'}`}
-                        >
-                          <Icon 
-                            size={20} 
-                            className={isPositive ? 'text-[#0ECB81]' : 'text-[#F6465D]'} 
-                          />
+                {dashboardData.transactions.length > 0 ? (
+                  dashboardData.transactions.map((transaction, index) => {
+                    const isPositive = transaction.type === 'buy' || transaction.type === 'deposit';
+                    const Icon = transaction.type === 'deposit' ? ArrowDownRight : 
+                                 transaction.type === 'buy' ? ArrowUpRight : ArrowDownRight;
+                    
+                    // Format time
+                    const timeAgo = new Date(transaction.createdAt);
+                    const now = new Date();
+                    const diffInHours = Math.floor((now - timeAgo) / (1000 * 60 * 60));
+                    const timeString = diffInHours < 1 ? 'Just now' : 
+                                     diffInHours < 24 ? `${diffInHours}h ago` : 
+                                     `${Math.floor(diffInHours / 24)}d ago`;
+                    
+                    return (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8 + index * 0.1 }}
+                        className="flex items-center justify-between p-4 bg-[#181A20] rounded-lg hover:bg-[#2B3139] transition-all group"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div 
+                            className={`p-2 rounded-lg ${isPositive ? 'bg-[#0ECB81]15' : 'bg-[#F6465D]15'}`}
+                          >
+                            <Icon 
+                              size={20} 
+                              className={isPositive ? 'text-[#0ECB81]' : 'text-[#F6465D]'} 
+                            />
+                          </div>
+                          <div>
+                            <p className="text-[#EAECEF] font-medium capitalize">
+                              {transaction.type} {transaction.currency || 'USD'}
+                            </p>
+                            <p className="text-[#848E9C] text-sm">{timeString}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[#EAECEF] font-medium capitalize">
-                            {activity.type} {activity.asset}
+                        
+                        <div className="text-right">
+                          <p className={`font-semibold ${isPositive ? 'text-[#0ECB81]' : 'text-[#F6465D]'}`}>
+                            {isPositive ? '+' : '-'}${transaction.amount?.toFixed(2) || '0.00'}
                           </p>
-                          <p className="text-[#848E9C] text-sm">{activity.time}</p>
+                          <p className="text-[#848E9C] text-sm">
+                            {transaction.status === 'completed' ? '✓ Completed' : 
+                             transaction.status === 'pending' ? '⏳ Pending' : 
+                             transaction.status === 'failed' ? '✗ Failed' : transaction.status}
+                          </p>
                         </div>
-                      </div>
-                      
-                      <div className="text-right">
-                        <p className={`font-semibold ${isPositive ? 'text-[#0ECB81]' : 'text-[#F6465D]'}`}>
-                          {isPositive ? '+' : '-'}{activity.amount} {activity.asset}
-                        </p>
-                        {activity.price && (
-                          <p className="text-[#848E9C] text-sm">@ ${activity.price}</p>
-                        )}
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                      </motion.div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8">
+                    <Activity className="mx-auto text-[#848E9C] mb-4" size={48} />
+                    <p className="text-[#848E9C]">No recent transactions</p>
+                    <p className="text-[#848E9C] text-sm">Your transaction history will appear here</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -330,10 +479,15 @@ export default function UserDashboard() {
             <div className="flex flex-col md:flex-row items-center justify-between">
               <div className="mb-4 md:mb-0">
                 <h3 className="text-[#EAECEF] text-xl font-bold mb-2">
-                  BNX is trending {currentStats.trend === 'up' ? '📈' : '📉'}
+                  BNX is trending {currentStats.trend === 'up' ? '📈' : '📉'} at ${dashboardData.market.price.toFixed(4)}
                 </h3>
                 <p className="text-[#848E9C]">
                   Market is {currentStats.trend === 'up' ? 'bullish' : 'bearish'}. {currentStats.percentage} in the last {timeframe}
+                  {dashboardData.market.volume24h > 0 && (
+                    <span className="block text-sm mt-1">
+                      Volume: ${dashboardData.market.volume24h.toLocaleString()}
+                    </span>
+                  )}
                 </p>
               </div>
               

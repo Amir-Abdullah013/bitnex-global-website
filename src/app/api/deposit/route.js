@@ -3,6 +3,7 @@ import { getServerSession, getUserRole } from '../../../lib/session';
 import { databaseHelpers } from '../../../lib/database';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import referralRewardService from '../../../lib/referral-reward-service';
 
 export async function POST(request) {
   console.log('🚀 Deposit API called');
@@ -135,6 +136,17 @@ export async function POST(request) {
       screenshot: `/uploads/deposits/${filename}`,
       binanceAddress: binanceAddress,
       description: `Deposit request via Binance`
+    });
+
+    // Trigger referral rewards (async, don't wait for completion)
+    referralRewardService.triggerReferralRewards(
+      dbUser.id,
+      amount,
+      'DEPOSIT',
+      transaction.id
+    ).catch(error => {
+      console.error('❌ Error triggering referral rewards for deposit:', error);
+      // Don't fail the deposit if referral rewards fail
     });
 
     return NextResponse.json({

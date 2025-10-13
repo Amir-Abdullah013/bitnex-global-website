@@ -23,6 +23,9 @@ export const ThemeProvider = ({ children }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     // Get theme from localStorage or system preference
     const savedTheme = localStorage.getItem('bitnex-theme');
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -57,5 +60,6 @@ export const ThemeProvider = ({ children }) => {
 };
 
 export default ThemeProvider;
+
 
 

@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Menu, X } from 'lucide-react';
 
 const BinanceSidebar = ({ user }) => {
   const pathname = usePathname();
   const isAdmin = user?.role === 'admin';
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const userNavigation = [
     {
@@ -26,6 +28,15 @@ const BinanceSidebar = ({ user }) => {
         </svg>
       ),
       href: '/user/trade',
+    },
+    {
+      title: 'Charts',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      href: '/user/charts',
     },
     {
       title: 'Wallet',
@@ -71,6 +82,15 @@ const BinanceSidebar = ({ user }) => {
         </svg>
       ),
       href: '/user/orders',
+    },
+    {
+      title: 'Referrals',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      href: '/user/referrals',
     },
   ];
   
@@ -121,6 +141,15 @@ const BinanceSidebar = ({ user }) => {
       href: '/admin/transactions',
     },
     {
+      title: 'Referrals',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      href: '/admin/referrals',
+    },
+    {
       title: 'Settings',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,32 +163,101 @@ const BinanceSidebar = ({ user }) => {
   
   const navigation = isAdmin ? adminNavigation : userNavigation;
   
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+  
   return (
-    <aside className="w-60 bg-binance-surface border-r border-binance-border h-[calc(100vh-3.5rem)] sticky top-14 overflow-y-auto">
-      <nav className="p-2 space-y-1">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-binance-surfaceHover text-binance-primary'
-                  : 'text-binance-textSecondary hover:bg-binance-surfaceHover hover:text-binance-textPrimary'
-              }`}
-            >
-              {item.icon}
-              <span className="text-sm font-medium">{item.title}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+    <>
+      {/* Mobile Hamburger Button */}
+      <div className="lg:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 bg-binance-surface text-binance-textPrimary rounded-lg border border-binance-border hover:bg-binance-surfaceHover transition-colors shadow-lg"
+          aria-label="Toggle navigation menu"
+        >
+          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-60 bg-binance-surface border-r border-binance-border h-[calc(100vh-3.5rem)] sticky top-14 overflow-y-auto">
+        <nav className="p-2 space-y-1">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-binance-surfaceHover text-binance-primary'
+                    : 'text-binance-textSecondary hover:bg-binance-surfaceHover hover:text-binance-textPrimary'
+                }`}
+              >
+                {item.icon}
+                <span className="text-sm font-medium">{item.title}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Mobile Sidebar */}
+      <aside className={`lg:hidden fixed top-0 left-0 w-80 max-w-[85vw] bg-binance-surface border-r border-binance-border h-full z-50 transform transition-transform duration-300 ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between p-4 border-b border-binance-border bg-binance-surface">
+          <h2 className="text-lg font-semibold text-binance-textPrimary">
+            {isAdmin ? 'Admin Menu' : 'Navigation'}
+          </h2>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2 text-binance-textSecondary hover:text-binance-textPrimary hover:bg-binance-surfaceHover rounded-lg transition-colors"
+            aria-label="Close navigation menu"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-binance-surfaceHover text-binance-primary'
+                    : 'text-binance-textSecondary hover:bg-binance-surfaceHover hover:text-binance-textPrimary'
+                }`}
+              >
+                {item.icon}
+                <span className="text-sm font-medium">{item.title}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 };
 
 export default BinanceSidebar;
+
 
 
 

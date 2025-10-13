@@ -24,30 +24,30 @@ class BinanceSocket {
       console.error('WebSocket is not available in this environment');
       return null;
     }
-    
+
     // Validate input
     if (!symbol || typeof symbol !== 'string') {
       console.error('Invalid symbol provided to connect');
       return null;
     }
-    
+
     if (typeof callback !== 'function') {
       console.error('Callback function is required for connect');
       return null;
     }
-    
+
     const normalizedSymbol = symbol.toLowerCase().trim();
-    
+
     if (!normalizedSymbol) {
       console.error('Empty symbol provided to connect');
       return null;
     }
-    
+
     // Use WebSocket manager with CSP handling
     const wsUrl = `wss://stream.binance.com:9443/ws/${normalizedSymbol}@ticker`;
     console.log(`Connecting to Binance WebSocket for symbol: ${normalizedSymbol}`);
     console.log(`WebSocket URL: ${wsUrl}`);
-    
+
     return this.connectWithFallback(wsUrl, callback, { symbol: normalizedSymbol });
   }
 
@@ -63,32 +63,32 @@ class BinanceSocket {
       console.error('WebSocket is not available in this environment');
       return null;
     }
-    
+
     // Validate input
     if (!Array.isArray(symbols) || symbols.length === 0) {
       console.error('Invalid symbols array provided to connectMultiple');
       return null;
     }
-    
+
     if (typeof callback !== 'function') {
       console.error('Callback function is required for connectMultiple');
       return null;
     }
-    
+
     const normalizedSymbols = symbols.map(s => s.toLowerCase()).filter(s => s && s.length > 0);
-    
+
     if (normalizedSymbols.length === 0) {
       console.error('No valid symbols provided to connectMultiple');
       return null;
     }
-    
+
     // Use WebSocket manager with CSP handling
     const streamNames = normalizedSymbols.map(s => `${s}@ticker`).join('/');
     const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streamNames}`;
-    
+
     console.log(`Connecting to Binance WebSocket for symbols: ${normalizedSymbols.join(', ')}`);
     console.log(`WebSocket URL: ${wsUrl}`);
-    
+
     return this.connectWithFallback(wsUrl, callback, { symbols: normalizedSymbols });
   }
 
@@ -98,13 +98,16 @@ class BinanceSocket {
    * @returns {Object} - Formatted ticker data
    */
   formatTickerData(data) {
+    // Ensure the symbol is a string before calling replace
+    const symbolString = data.s ? String(data.s) : ''; 
     const priceChangePercent = parseFloat(data.P || '0');
     const isPositive = priceChangePercent >= 0;
-    
+
     return {
-      symbol: data.s || '',
-      baseAsset: data.s?.replace('USDT', '').replace('BTC', '').replace('ETH', '') || '',
-      quoteAsset: data.s?.includes('USDT') ? 'USDT' : data.s?.includes('BTC') ? 'BTC' : 'ETH',
+      symbol: symbolString,
+      // Simplified base asset logic to prevent errors if symbol is missing
+      baseAsset: symbolString.replace('USDT', '').replace('BTC', '').replace('ETH', '') || '', 
+      quoteAsset: symbolString.includes('USDT') ? 'USDT' : symbolString.includes('BTC') ? 'BTC' : 'ETH',
       lastPrice: parseFloat(data.c || '0'),
       priceChange: parseFloat(data.P || '0'),
       priceChangePercent: priceChangePercent,
@@ -167,14 +170,14 @@ class BinanceSocket {
    */
   handleReconnect(connectionId, symbols, callback) {
     const attempts = this.reconnectAttempts.get(connectionId) || 0;
-    
+
     if (attempts < this.maxReconnectAttempts) {
       const delay = this.reconnectDelay * Math.pow(2, attempts);
       console.log(`Reconnecting in ${delay}ms (attempt ${attempts + 1}/${this.maxReconnectAttempts})`);
-      
+
       setTimeout(() => {
         this.reconnectAttempts.set(connectionId, attempts + 1);
-        
+
         if (Array.isArray(symbols)) {
           this.connectMultiple(symbols, callback);
         } else {
@@ -200,7 +203,7 @@ class BinanceSocket {
         connection.close();
       }
     }
-    
+
     this.cleanup(connectionId);
   }
 
@@ -227,7 +230,7 @@ class BinanceSocket {
         }
       }
     }
-    
+
     this.sockets.clear();
     this.subscribers.clear();
     this.reconnectAttempts.clear();
@@ -243,7 +246,7 @@ class BinanceSocket {
     if (!connection) {
       return { connected: false, readyState: 'CLOSED' };
     }
-    
+
     if (connection.type === 'polling') {
       return {
         connected: true,
@@ -251,7 +254,7 @@ class BinanceSocket {
         type: 'polling'
       };
     }
-    
+
     return {
       connected: connection.readyState === WebSocket.OPEN,
       readyState: ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'][connection.readyState]
@@ -263,11 +266,11 @@ class BinanceSocket {
    */
   async connectWithFallback(wsUrl, callback, options = {}) {
     const connectionId = `${options.symbol || 'ws'}_${Date.now()}`;
-    
+
     try {
       // Try WebSocket first
       const ws = new WebSocket(wsUrl);
-      
+
       ws.onopen = () => {
         console.log(`WebSocket connected: ${wsUrl}`);
         this.sockets.set(connectionId, ws);
@@ -276,7 +279,25 @@ class BinanceSocket {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          callback(data);
+          let tickerData;
+          
+          // --- START CRITICAL FIX: Handle Combined Stream Wrapper ---
+          if (data && data.stream && data.data) {
+            // Combined Stream Message (Used by connectMultiple)
+            tickerData = data.data;
+          } else if (data && data.s && data.c) {
+            // Raw Stream Message (Used by connect)
+            tickerData = data;
+          } else {
+            // Ignore non-ticker messages (e.g., subscription confirmation)
+            return; 
+          }
+          
+          // Format the data and send it to the UI callback
+          const formattedData = this.formatTickerData(tickerData);
+          callback(formattedData);
+          // --- END CRITICAL FIX ---
+
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
         }
@@ -310,31 +331,31 @@ class BinanceSocket {
     if (typeof window === 'undefined') {
       return true; // Server-side, use polling
     }
-    
+
     // Check for CSP violations by looking at console errors
     const originalError = console.error;
     let cspError = false;
-    
+
     console.error = function(...args) {
       if (args.some(arg => typeof arg === 'string' && arg.includes('CSP'))) {
         cspError = true;
       }
       originalError.apply(console, args);
     };
-    
+
     try {
       // Try to create a test WebSocket connection
-      const testWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
-      
+      const testWs = new WebSocket('wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker/bnbusdt@ticker/adausdt@ticker/solusdt@ticker/xrpusdt@ticker/dotusdt@ticker/linkusdt@ticker/uniusdt@ticker/ltcusdt@ticker');
+
       // Reset console.error
       console.error = originalError;
-      
+
       // If we get here without CSP error, WebSocket should work
       if (cspError) {
         testWs.close();
         return true;
       }
-      
+
       testWs.close();
       return false;
     } catch (error) {
@@ -354,7 +375,7 @@ class BinanceSocket {
   startPolling(symbols, callback, interval = 5000) {
     const pollingId = `polling_${Date.now()}`;
     const symbolsArray = Array.isArray(symbols) ? symbols : [symbols];
-    
+
     const pollData = async () => {
       try {
         const promises = symbolsArray.map(async (symbol) => {
@@ -366,10 +387,11 @@ class BinanceSocket {
               },
               mode: 'cors'
             });
-            
+
             if (response.ok) {
               const data = await response.json();
-              return this.formatTickerData(data);
+              // Polling correctly formats data before sending it to the callback
+              return this.formatTickerData(data); 
             } else {
               console.warn(`Failed to fetch data for ${symbol}: ${response.status}`);
               return null;
@@ -379,28 +401,29 @@ class BinanceSocket {
             return null;
           }
         });
-        
+
         const results = await Promise.all(promises);
         const validResults = results.filter(result => result !== null);
-        
+
         if (validResults.length > 0) {
+          // Send each formatted result to the UI callback
           validResults.forEach(result => callback(result));
         }
       } catch (error) {
         console.error('HTTP polling error:', error);
       }
     };
-    
+
     // Start polling immediately
     pollData();
-    
+
     // Set up interval
     const intervalId = setInterval(pollData, interval);
-    
+
     // Store polling reference for cleanup
     this.sockets.set(pollingId, { intervalId, type: 'polling' });
     this.subscribers.set(pollingId, callback);
-    
+
     return pollingId;
   }
 }

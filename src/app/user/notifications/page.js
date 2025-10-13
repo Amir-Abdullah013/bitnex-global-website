@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { authenticatedFetch, initializeAuth } from '@/lib/auth-helper';
 import { Button, Card, Loader, Toast } from '@/components';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -15,10 +16,24 @@ export default function UserNotificationsPage() {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    // Initialize authentication
+    initializeAuth();
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
       loadNotifications();
     } else if (!authLoading && !isAuthenticated) {
-      router.push('/auth/signin');
+      // Check localStorage as fallback
+      const userSession = localStorage.getItem('userSession');
+      const hasLocalSession = userSession && JSON.parse(userSession);
+      
+      if (!hasLocalSession) {
+        router.push('/auth/signin');
+      } else {
+        // Load notifications even with localStorage session
+        loadNotifications();
+      }
     }
   }, [authLoading, isAuthenticated, user]);
 
@@ -26,14 +41,40 @@ export default function UserNotificationsPage() {
     try {
       setLoading(true);
       
-      const response = await fetch(`/api/notifications?userId=${user.id}&limit=25&offset=0`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch notifications');
+      // Get user ID from auth context or localStorage
+      let userId = user?.id;
+      if (!userId) {
+        const userSession = localStorage.getItem('userSession');
+        if (userSession) {
+          const sessionData = JSON.parse(userSession);
+          userId = sessionData.id;
+        }
       }
       
-      const data = await response.json();
-      setNotifications(data.notifications || []);
+      if (!userId) {
+        console.error('No user ID available');
+        setToast({
+          type: 'error',
+          message: 'User not authenticated'
+        });
+        return;
+      }
+      
+      console.log('📬 Loading notifications for user:', userId);
+      
+      const response = await authenticatedFetch(`/api/notifications?userId=${userId}&limit=25&offset=0`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📬 Notifications loaded:', data.notifications?.length || 0);
+        setNotifications(data.notifications || []);
+      } else {
+        console.error('Failed to fetch notifications:', response.status);
+        setToast({
+          type: 'error',
+          message: 'Failed to load notifications'
+        });
+      }
     } catch (error) {
       console.error('Error loading notifications:', error);
       setToast({
@@ -49,7 +90,7 @@ export default function UserNotificationsPage() {
     try {
       setMarkingAsRead(notificationId);
       
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
+      const response = await authenticatedFetch(`/api/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

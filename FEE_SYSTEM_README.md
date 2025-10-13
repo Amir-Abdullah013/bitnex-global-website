@@ -302,3 +302,4 @@ console.log('Withdrawal fee:', data2.calculation);
 The fee system is now fully operational and integrated into the Bitnex Global trading platform! 🎉
 
 
+

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
+import { authenticatedFetch, initializeAuth } from '../../../lib/auth-helper';
 import AdminLayout from '../../../components/AdminLayout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
@@ -61,6 +62,8 @@ export default function AdminTransactionsPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Initialize authentication
+    initializeAuth();
   }, []);
 
   useEffect(() => {
@@ -96,7 +99,7 @@ export default function AdminTransactionsPage() {
       if (selectedType !== 'all') params.append('type', selectedType);
       if (selectedStatus !== 'all') params.append('status', selectedStatus);
       
-      const response = await fetch(`/api/admin/transactions?${params.toString()}`);
+      const response = await authenticatedFetch(`/api/admin/transactions?${params.toString()}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -389,28 +392,28 @@ export default function AdminTransactionsPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/20 text-green-400 border border-green-500/30';
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
       case 'FAILED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/20 text-red-400 border border-red-500/30';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[#2B3139] text-[#B7BDC6] border border-[#3A4049]';
     }
   };
 
   const getTypeColor = (type) => {
     switch (type) {
       case 'DEPOSIT':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
       case 'WITHDRAWAL':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/20 text-red-400 border border-red-500/30';
       case 'BUY':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/20 text-green-400 border border-green-500/30';
       case 'SELL':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-500/20 text-orange-400 border border-orange-500/30';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[#2B3139] text-[#B7BDC6] border border-[#3A4049]';
     }
   };
 
@@ -420,10 +423,10 @@ export default function AdminTransactionsPage() {
 
   if (!mounted || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#181A20] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading transactions...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F0B90B] mx-auto mb-4"></div>
+          <p className="text-[#B7BDC6]">Loading transactions...</p>
         </div>
       </div>
     );
@@ -431,10 +434,10 @@ export default function AdminTransactionsPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#181A20] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirecting to sign in...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F0B90B] mx-auto mb-4"></div>
+          <p className="text-[#B7BDC6]">Redirecting to sign in...</p>
         </div>
       </div>
     );
@@ -442,21 +445,21 @@ export default function AdminTransactionsPage() {
 
   return (
     <AdminLayout showSidebar={true}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#181A20]">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
+        <div className="bg-[#1E2329] border-b border-[#2B3139]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-6">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Transaction Management</h1>
-                <p className="text-gray-600">Manage all user transactions</p>
+                <h1 className="text-3xl font-bold text-white">Transaction Management</h1>
+                <p className="text-[#B7BDC6] mt-1">Monitor and manage all user transactions</p>
               </div>
               <div className="flex items-center space-x-4">
                 <Button
                   onClick={() => router.push('/admin/dashboard')}
-                  variant="outline"
+                  className="bg-[#2B3139] hover:bg-[#3A4049] text-white border border-[#3A4049]"
                 >
-                  Back to Dashboard
+                  ← Back to Dashboard
                 </Button>
               </div>
             </div>
@@ -467,65 +470,69 @@ export default function AdminTransactionsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
+            <Card className="bg-[#1E2329] border-[#2B3139]">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <span className="text-blue-600 text-lg">💰</span>
+                    <div className="w-12 h-12 bg-[#F0B90B]/20 border border-[#F0B90B]/30 rounded-lg flex items-center justify-center">
+                      <span className="text-[#F0B90B] text-xl">💰</span>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Transactions</p>
-                    <p className="text-2xl font-bold text-gray-900">{totalTransactions}</p>
+                    <p className="text-sm font-medium text-[#B7BDC6]">Total Transactions</p>
+                    <p className="text-2xl font-bold text-white">{totalTransactions.toLocaleString()}</p>
+                    <p className="text-xs text-[#B7BDC6] mt-1">All time</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[#1E2329] border-[#2B3139]">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                      <span className="text-green-600 text-lg">✅</span>
+                    <div className="w-12 h-12 bg-green-500/20 border border-green-500/30 rounded-lg flex items-center justify-center">
+                      <span className="text-green-500 text-xl">✅</span>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Completed</p>
-                    <p className="text-2xl font-bold text-gray-900">{completedTransactions}</p>
+                    <p className="text-sm font-medium text-[#B7BDC6]">Completed</p>
+                    <p className="text-2xl font-bold text-white">{completedTransactions.toLocaleString()}</p>
+                    <p className="text-xs text-green-500 mt-1">+12.5% from last month</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[#1E2329] border-[#2B3139]">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <span className="text-yellow-600 text-lg">⏳</span>
+                    <div className="w-12 h-12 bg-yellow-500/20 border border-yellow-500/30 rounded-lg flex items-center justify-center">
+                      <span className="text-yellow-500 text-xl">⏳</span>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Pending</p>
-                    <p className="text-2xl font-bold text-gray-900">{pendingTransactions}</p>
+                    <p className="text-sm font-medium text-[#B7BDC6]">Pending</p>
+                    <p className="text-2xl font-bold text-white">{pendingTransactions.toLocaleString()}</p>
+                    <p className="text-xs text-yellow-500 mt-1">Awaiting approval</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[#1E2329] border-[#2B3139]">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <span className="text-purple-600 text-lg">💵</span>
+                    <div className="w-12 h-12 bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center justify-center">
+                      <span className="text-blue-500 text-xl">💵</span>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Amount</p>
-                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalAmount)}</p>
+                    <p className="text-sm font-medium text-[#B7BDC6]">Total Volume</p>
+                    <p className="text-2xl font-bold text-white">{formatCurrency(totalAmount)}</p>
+                    <p className="text-xs text-[#B7BDC6] mt-1">All transactions</p>
                   </div>
                 </div>
               </CardContent>
@@ -533,29 +540,29 @@ export default function AdminTransactionsPage() {
           </div>
 
           {/* Filters and Search */}
-          <Card className="mb-6">
+          <Card className="mb-6 bg-[#1E2329] border-[#2B3139]">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Search
+                  <label className="block text-sm font-medium text-[#B7BDC6] mb-2">
+                    Search Transactions
                   </label>
                   <Input
                     type="text"
-                    placeholder="Search transactions..."
+                    placeholder="Search by ID, user, or amount..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
+                    className="w-full bg-[#2B3139] border-[#3A4049] text-white placeholder-[#B7BDC6] focus:border-[#F0B90B] focus:ring-[#F0B90B]/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type
+                  <label className="block text-sm font-medium text-[#B7BDC6] mb-2">
+                    Transaction Type
                   </label>
                   <select
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-[#2B3139] border border-[#3A4049] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0B90B]/20 focus:border-[#F0B90B]"
                   >
                     <option value="all">All Types</option>
                     <option value="DEPOSIT">Deposit</option>
@@ -565,13 +572,13 @@ export default function AdminTransactionsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
+                  <label className="block text-sm font-medium text-[#B7BDC6] mb-2">
+                    Status Filter
                   </label>
                   <select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-[#2B3139] border border-[#3A4049] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0B90B]/20 focus:border-[#F0B90B]"
                   >
                     <option value="all">All Status</option>
                     <option value="COMPLETED">Completed</option>
@@ -583,9 +590,16 @@ export default function AdminTransactionsPage() {
                   <Button
                     onClick={loadTransactions}
                     disabled={loadingTransactions}
-                    className="w-full"
+                    className="w-full bg-[#F0B90B] hover:bg-[#F0B90B]/80 text-black font-semibold disabled:opacity-50"
                   >
-                    {loadingTransactions ? 'Loading...' : 'Refresh'}
+                    {loadingTransactions ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                        Loading...
+                      </div>
+                    ) : (
+                      'Refresh Data'
+                    )}
                   </Button>
                 </div>
               </div>
@@ -593,106 +607,120 @@ export default function AdminTransactionsPage() {
           </Card>
 
           {/* Transactions Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>All Transactions</CardTitle>
+          <Card className="bg-[#1E2329] border-[#2B3139]">
+            <CardHeader className="border-b border-[#2B3139]">
+              <CardTitle className="text-white text-xl font-semibold">Transaction History</CardTitle>
+              <p className="text-[#B7BDC6] text-sm mt-1">Monitor and manage all user transactions</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {loadingTransactions ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  <span className="ml-2 text-gray-600">Loading transactions...</span>
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F0B90B] mx-auto mb-4"></div>
+                    <span className="text-[#B7BDC6]">Loading transactions...</span>
+                  </div>
                 </div>
               ) : (
                 <>
                   {getCurrentPageTransactions().length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">No transactions found</p>
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-[#2B3139] rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-[#B7BDC6] text-2xl">📊</span>
+                      </div>
+                      <p className="text-[#B7BDC6] text-lg">No transactions found</p>
+                      <p className="text-[#B7BDC6] text-sm mt-1">Try adjusting your filters or search terms</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                      <table className="min-w-full">
+                        <thead className="bg-[#2B3139]">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-[#B7BDC6] uppercase tracking-wider">
                               Transaction ID
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              User
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-[#B7BDC6] uppercase tracking-wider">
+                              User Details
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-[#B7BDC6] uppercase tracking-wider">
                               Type
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-[#B7BDC6] uppercase tracking-wider">
                               Amount
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Currency
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-[#B7BDC6] uppercase tracking-wider">
                               Status
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Date
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-[#B7BDC6] uppercase tracking-wider">
+                              Date & Time
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-[#B7BDC6] uppercase tracking-wider">
                               Actions
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {getCurrentPageTransactions().map((transaction) => (
-                            <tr key={transaction.id} className="hover:bg-gray-50">
+                        <tbody className="divide-y divide-[#2B3139]">
+                          {getCurrentPageTransactions().map((transaction, index) => (
+                            <tr key={transaction.id} className={`hover:bg-[#2B3139]/50 transition-colors ${index % 2 === 0 ? 'bg-[#1E2329]' : 'bg-[#1A1F29]'}`}>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {transaction.id}
+                                <div className="text-sm font-mono text-white">
+                                  {transaction.id.slice(0, 8)}...
+                                </div>
+                                <div className="text-xs text-[#B7BDC6]">
+                                  {transaction.id.slice(-4)}
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div>
-                                  <div className="text-sm font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-white">
                                     {transaction.user?.name || 'Unknown User'}
                                   </div>
-                                  <div className="text-sm text-gray-500">
+                                  <div className="text-sm text-[#B7BDC6]">
                                     {transaction.user?.email || 'unknown@example.com'}
                                   </div>
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(transaction.type)}`}>
+                                <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getTypeColor(transaction.type)}`}>
                                   {transaction.type}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatCurrency(transaction.amount)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {transaction.currency || 'USD'}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-semibold text-white">
+                                  {formatCurrency(transaction.amount)}
+                                </div>
+                                <div className="text-xs text-[#B7BDC6]">
+                                  {transaction.currency || 'USD'}
+                                </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
+                                <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
                                   {transaction.status}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {formatDate(transaction.createdAt)}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-white">
+                                  {formatDate(transaction.createdAt)}
+                                </div>
+                                <div className="text-xs text-[#B7BDC6]">
+                                  {new Date(transaction.createdAt).toLocaleTimeString()}
+                                </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div className="flex space-x-2">
                                   <Button
                                     size="sm"
-                                    variant="outline"
                                     onClick={() => handleViewTransaction(transaction)}
+                                    className="bg-[#2B3139] hover:bg-[#3A4049] text-white border border-[#3A4049] text-xs"
                                   >
                                     View
                                   </Button>
                                   <Button
                                     size="sm"
-                                    variant="outline"
                                     onClick={() => handleUpdateStatus(transaction)}
                                     disabled={actionLoading}
+                                    className="bg-[#F0B90B] hover:bg-[#F0B90B]/80 text-black text-xs disabled:opacity-50"
                                   >
-                                    Update Status
+                                    Update
                                   </Button>
                                 </div>
                               </td>
@@ -705,29 +733,29 @@ export default function AdminTransactionsPage() {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-6">
-                      <div className="text-sm text-gray-700">
-                        Showing {((currentPage - 1) * transactionsPerPage) + 1} to {Math.min(currentPage * transactionsPerPage, totalTransactions)} of {totalTransactions} transactions
+                    <div className="flex items-center justify-between px-6 py-4 bg-[#2B3139] border-t border-[#3A4049]">
+                      <div className="text-sm text-[#B7BDC6]">
+                        Showing {((currentPage - 1) * transactionsPerPage) + 1} to {Math.min(currentPage * transactionsPerPage, totalTransactions)} of {totalTransactions.toLocaleString()} transactions
                       </div>
                       <div className="flex space-x-2">
                         <Button
-                          variant="outline"
                           size="sm"
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
+                          className="bg-[#1E2329] hover:bg-[#3A4049] text-white border border-[#3A4049] disabled:opacity-50"
                         >
-                          Previous
+                          ← Previous
                         </Button>
-                        <span className="px-3 py-2 text-sm text-gray-700">
+                        <span className="px-4 py-2 text-sm text-[#B7BDC6] bg-[#1E2329] rounded border border-[#3A4049]">
                           Page {currentPage} of {totalPages}
                         </span>
                         <Button
-                          variant="outline"
                           size="sm"
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
+                          className="bg-[#1E2329] hover:bg-[#3A4049] text-white border border-[#3A4049] disabled:opacity-50"
                         >
-                          Next
+                          Next →
                         </Button>
                       </div>
                     </div>
@@ -740,39 +768,84 @@ export default function AdminTransactionsPage() {
 
         {/* Transaction Details Modal */}
         {showTransactionModal && selectedTransaction && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">Transaction Details</h3>
-              <div className="space-y-3">
-                <div>
-                  <span className="font-medium">ID:</span> {selectedTransaction.id}
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#1E2329] border border-[#2B3139] rounded-xl p-6 max-w-lg w-full">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-white">Transaction Details</h3>
+                <button
+                  onClick={() => setShowTransactionModal(false)}
+                  className="text-[#B7BDC6] hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-[#2B3139] rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[#B7BDC6] text-sm">Transaction ID</span>
+                      <div className="text-white font-mono text-sm mt-1">{selectedTransaction.id}</div>
+                    </div>
+                    <div>
+                      <span className="text-[#B7BDC6] text-sm">Status</span>
+                      <div className="mt-1">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedTransaction.status)}`}>
+                          {selectedTransaction.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium">User:</span> {selectedTransaction.user?.name} ({selectedTransaction.user?.email})
+                
+                <div className="bg-[#2B3139] rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[#B7BDC6] text-sm">User</span>
+                      <div className="text-white text-sm mt-1">{selectedTransaction.user?.name || 'Unknown'}</div>
+                      <div className="text-[#B7BDC6] text-xs">{selectedTransaction.user?.email || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <span className="text-[#B7BDC6] text-sm">Type</span>
+                      <div className="mt-1">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(selectedTransaction.type)}`}>
+                          {selectedTransaction.type}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium">Type:</span> {selectedTransaction.type}
+
+                <div className="bg-[#2B3139] rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[#B7BDC6] text-sm">Amount</span>
+                      <div className="text-white font-semibold text-lg mt-1">{formatCurrency(selectedTransaction.amount)}</div>
+                      <div className="text-[#B7BDC6] text-xs">{selectedTransaction.currency || 'USD'}</div>
+                    </div>
+                    <div>
+                      <span className="text-[#B7BDC6] text-sm">Gateway</span>
+                      <div className="text-white text-sm mt-1">{selectedTransaction.gateway || 'N/A'}</div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium">Amount:</span> {formatCurrency(selectedTransaction.amount)}
-                </div>
-                <div>
-                  <span className="font-medium">Status:</span> {selectedTransaction.status}
-                </div>
-                <div>
-                  <span className="font-medium">Gateway:</span> {selectedTransaction.gateway || 'N/A'}
-                </div>
-                <div>
-                  <span className="font-medium">Created:</span> {formatDate(selectedTransaction.createdAt)}
-                </div>
-                <div>
-                  <span className="font-medium">Updated:</span> {formatDate(selectedTransaction.updatedAt)}
+
+                <div className="bg-[#2B3139] rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[#B7BDC6] text-sm">Created</span>
+                      <div className="text-white text-sm mt-1">{formatDate(selectedTransaction.createdAt)}</div>
+                    </div>
+                    <div>
+                      <span className="text-[#B7BDC6] text-sm">Updated</span>
+                      <div className="text-white text-sm mt-1">{formatDate(selectedTransaction.updatedAt)}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end mt-6">
                 <Button
                   onClick={() => setShowTransactionModal(false)}
-                  variant="outline"
+                  className="bg-[#2B3139] hover:bg-[#3A4049] text-white border border-[#3A4049]"
                 >
                   Close
                 </Button>
@@ -783,22 +856,36 @@ export default function AdminTransactionsPage() {
 
         {/* Status Update Modal */}
         {showStatusModal && selectedTransaction && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">Update Transaction Status</h3>
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#1E2329] border border-[#2B3139] rounded-xl p-6 max-w-md w-full">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-white">Update Transaction Status</h3>
+                <button
+                  onClick={() => setShowStatusModal(false)}
+                  className="text-[#B7BDC6] hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
               <div className="space-y-4">
-                <div>
-                  <span className="font-medium">Transaction:</span> {selectedTransaction.id}
+                <div className="bg-[#2B3139] rounded-lg p-4">
+                  <div className="text-[#B7BDC6] text-sm">Transaction ID</div>
+                  <div className="text-white font-mono text-sm mt-1">{selectedTransaction.id}</div>
                 </div>
-                <div>
-                  <span className="font-medium">Current Status:</span> {selectedTransaction.status}
+                
+                <div className="bg-[#2B3139] rounded-lg p-4">
+                  <div className="text-[#B7BDC6] text-sm mb-2">Current Status</div>
+                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(selectedTransaction.status)}`}>
+                    {selectedTransaction.status}
+                  </span>
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-[#B7BDC6] mb-2">
                     New Status
                   </label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-3 bg-[#2B3139] border border-[#3A4049] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F0B90B]/20 focus:border-[#F0B90B]"
                     defaultValue={selectedTransaction.status}
                   >
                     <option value="PENDING">Pending</option>
@@ -807,10 +894,10 @@ export default function AdminTransactionsPage() {
                   </select>
                 </div>
               </div>
-              <div className="flex justify-end space-x-2 mt-6">
+              <div className="flex justify-end space-x-3 mt-6">
                 <Button
                   onClick={() => setShowStatusModal(false)}
-                  variant="outline"
+                  className="bg-[#2B3139] hover:bg-[#3A4049] text-white border border-[#3A4049]"
                 >
                   Cancel
                 </Button>
@@ -820,8 +907,16 @@ export default function AdminTransactionsPage() {
                     handleStatusUpdate(select.value);
                   }}
                   disabled={actionLoading}
+                  className="bg-[#F0B90B] hover:bg-[#F0B90B]/80 text-black font-semibold disabled:opacity-50"
                 >
-                  {actionLoading ? 'Updating...' : 'Update Status'}
+                  {actionLoading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                      Updating...
+                    </div>
+                  ) : (
+                    'Update Status'
+                  )}
                 </Button>
               </div>
             </div>

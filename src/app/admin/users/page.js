@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../../../lib/admin-auth';
+import { authenticatedFetch, initializeAuth } from '../../../lib/auth-helper';
 import AdminLayout from '../../../components/AdminLayout';
 import Card, { CardContent, CardHeader, CardTitle } from '../../../components/Card';
 import Button from '../../../components/Button';
@@ -38,6 +39,8 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Initialize authentication
+    initializeAuth();
   }, []);
 
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function AdminUsersPage() {
       if (selectedRole !== 'all') params.append('role', selectedRole);
       if (selectedStatus !== 'all') params.append('status', selectedStatus);
       
-      const response = await fetch(`/api/admin/users?${params.toString()}`);
+      const response = await authenticatedFetch(`/api/admin/users?${params.toString()}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -122,7 +125,7 @@ export default function AdminUsersPage() {
   const handleEditUser = (user) => {
     setSelectedUser(user);
     // Navigate to edit page or open edit modal
-    router.push(`/admin/users/${adminUser.id}/edit`);
+    router.push(`/admin/users/${user.id}/edit`);
   };
 
   const handleDeleteUser = (user) => {
@@ -135,7 +138,7 @@ export default function AdminUsersPage() {
 
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+      const response = await authenticatedFetch(`/api/admin/users/${selectedUser.id}`, {
         method: 'DELETE'
       });
 
@@ -158,9 +161,9 @@ export default function AdminUsersPage() {
   const handleToggleUserStatus = async (user) => {
     try {
       setActionLoading(true);
-      const newStatus = adminUser.status === 'active' ? 'inactive' : 'active';
+      const newStatus = user.status === 'active' ? 'inactive' : 'active';
       
-      const response = await fetch(`/api/admin/users/${adminUser.id}/status`, {
+      const response = await authenticatedFetch(`/api/admin/users/${user.id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -171,26 +174,26 @@ export default function AdminUsersPage() {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Status update successful:', data);
-        success(`User ${adminUser.name} ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
+        success(`User ${user.name} ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
         
         // Update the user in local state immediately for better UX
         setUsers(prevUsers => {
           const updatedUsers = prevUsers.map(u => 
-            u.id === adminUser.id 
+            u.id === user.id 
               ? { ...u, status: newStatus, updatedAt: new Date().toISOString() }
               : u
           );
-          console.log('🔄 Updated users state:', updatedUsers.find(u => u.id === adminUser.id));
+          console.log('🔄 Updated users state:', updatedUsers.find(u => u.id === user.id));
           return updatedUsers;
         });
         
         setFilteredUsers(prevFiltered => {
           const updatedFiltered = prevFiltered.map(u => 
-            u.id === adminUser.id 
+            u.id === user.id 
               ? { ...u, status: newStatus, updatedAt: new Date().toISOString() }
               : u
           );
-          console.log('🔄 Updated filtered users state:', updatedFiltered.find(u => u.id === adminUser.id));
+          console.log('🔄 Updated filtered users state:', updatedFiltered.find(u => u.id === user.id));
           return updatedFiltered;
         });
         
@@ -434,52 +437,52 @@ export default function AdminUsersPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {getCurrentPageUsers().map((user) => (
-                      <tr key={adminUser.id} className="hover:bg-gray-50">
+                      <tr key={user.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
                               <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                                 <span className="text-blue-600 font-medium">
-                                  {adminUser.name.charAt(0).toUpperCase()}
+                                  {user.name.charAt(0).toUpperCase()}
                                 </span>
                               </div>
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
-                                {adminUser.name}
+                                {user.name}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {adminUser.email}
+                                {user.email}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            adminUser.role === 'ADMIN' 
+                            user.role === 'ADMIN' 
                               ? 'bg-purple-100 text-purple-800' 
                               : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {adminUser.role}
+                            {user.role}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            (adminUser.status || 'active') === 'active' 
+                            (user.status || 'active') === 'active' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {adminUser.status || 'active'}
+                            {user.status || 'active'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div>
-                            <div className="font-medium">{formatCurrency(adminUser.walletBalance)}</div>
-                            <div className="text-gray-500">{formatTiki(adminUser.tikiBalance)} TIKI</div>
+                            <div className="font-medium">{formatCurrency(user.walletBalance || 0)}</div>
+                            <div className="text-gray-500">{formatTiki(user.tikiBalance || 0)} TIKI</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(adminUser.lastLogin)}
+                          {formatDate(user.lastLogin || user.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
@@ -502,9 +505,9 @@ export default function AdminUsersPage() {
                               variant="outline"
                               onClick={() => handleToggleUserStatus(user)}
                               disabled={actionLoading}
-                              className={(adminUser.status || 'active') === 'active' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}
+                              className={(user.status || 'active') === 'active' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}
                             >
-                              {(adminUser.status || 'active') === 'active' ? 'Deactivate' : 'Activate'}
+                              {(user.status || 'active') === 'active' ? 'Deactivate' : 'Activate'}
                             </Button>
                             <Button
                               size="sm"

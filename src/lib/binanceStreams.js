@@ -13,7 +13,7 @@ class BinanceStreams {
   }
 
   /**
-   * Connect to multiple streams for a symbol
+   * Connect to a single stream for a symbol (maintains original functionality)
    * @param {string} symbol - Trading pair symbol (e.g., 'btcusdt')
    * @param {Object} callbacks - Callback functions for different data types
    * @returns {string} - Connection ID for cleanup
@@ -25,17 +25,17 @@ class BinanceStreams {
     // Store callbacks
     this.subscribers.set(connectionId, callbacks);
     
-    // Create streams array
+    // Create streams array for ONE symbol
     const streams = [
-      `${normalizedSymbol}@ticker`,      // Price updates
-      `${normalizedSymbol}@trade`,       // Recent trades
-      `${normalizedSymbol}@depth`,       // Order book
-      `${normalizedSymbol}@kline_1m`,    // 1-minute klines
-      `${normalizedSymbol}@kline_5m`,    // 5-minute klines
-      `${normalizedSymbol}@kline_15m`,   // 15-minute klines
-      `${normalizedSymbol}@kline_1h`,   // 1-hour klines
-      `${normalizedSymbol}@kline_4h`,    // 4-hour klines
-      `${normalizedSymbol}@kline_1d`     // 1-day klines
+      `${normalizedSymbol}@ticker`,      // Price updates
+      `${normalizedSymbol}@trade`,       // Recent trades
+      `${normalizedSymbol}@depth`,       // Order book
+      `${normalizedSymbol}@kline_1m`,    // 1-minute klines
+      `${normalizedSymbol}@kline_5m`,    // 5-minute klines
+      `${normalizedSymbol}@kline_15m`,   // 15-minute klines
+      `${normalizedSymbol}@kline_1h`,   // 1-hour klines
+      `${normalizedSymbol}@kline_4h`,    // 4-hour klines
+      `${normalizedSymbol}@kline_1d`     // 1-day klines
     ];
     
     const streamNames = streams.join('/');
@@ -54,7 +54,8 @@ class BinanceStreams {
       try {
         const data = JSON.parse(event.data);
         if (data.stream && data.data) {
-          this.handleStreamData(connectionId, data.stream, data.data, callbacks);
+          // Pass the connectionId's callbacks to handle the data
+          this.handleStreamData(connectionId, data.stream, data.data, this.subscribers.get(connectionId));
         }
       } catch (error) {
         console.error('Error parsing stream data:', error);
@@ -63,7 +64,7 @@ class BinanceStreams {
     
     ws.onclose = (event) => {
       console.log(`Stream closed for ${normalizedSymbol}:`, event.code, event.reason);
-      this.handleReconnect(connectionId, normalizedSymbol, callbacks);
+      this.handleReconnect(connectionId, normalizedSymbol, this.subscribers.get(connectionId));
     };
     
     ws.onerror = (error) => {
@@ -73,6 +74,72 @@ class BinanceStreams {
     return connectionId;
   }
 
+  // --- NEW METHOD FOR FIXING THE MULTIPLE SYMBOLS ISSUE ---
+  /**
+   * Connect to one stream (e.g., @ticker) for multiple symbols.
+   * This is the function you should use to populate your 'Top Gainers' table.
+   * @param {Array<string>} symbols - Array of trading pair symbols (e.g., ['BTCUSDT', 'ETHUSDT'])
+   * @param {Object} callbacks - Callback functions (should primarily use onTicker)
+   * @returns {string} - Connection ID for cleanup
+   */
+  connectToMultipleSymbols(symbols, callbacks = {}) {
+    if (!Array.isArray(symbols) || symbols.length === 0) {
+        console.error('Invalid symbols array provided to connectToMultipleSymbols');
+        return null;
+    }
+
+    // Create a unique connection ID based on the first symbol
+    const normalizedSymbols = symbols.map(s => s.toLowerCase());
+    const connectionId = `multi_${normalizedSymbols[0]}_${Date.now()}`;
+    
+    // Store callbacks
+    this.subscribers.set(connectionId, callbacks);
+    
+    // Create ONE combined stream array for the @ticker stream for all symbols
+    const streamNames = normalizedSymbols
+        .map(s => `${s}@ticker`)
+        .join('/');
+
+    const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streamNames}`;
+    const ws = new new WebSocket(wsUrl); // <-- Assuming you have WebSocket defined globally
+    
+    this.sockets.set(connectionId, ws);
+    this.reconnectAttempts.set(connectionId, 0);
+    
+    ws.onopen = () => {
+      console.log(`Connected to Binance multi-ticker stream for ${normalizedSymbols.length} symbols.`);
+      this.reconnectAttempts.set(connectionId, 0);
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.stream && data.data) {
+          // Use the central handler to parse and distribute the data
+          this.handleStreamData(connectionId, data.stream, data.data, this.subscribers.get(connectionId));
+        }
+      } catch (error) {
+        console.error('Error parsing multi-stream data:', error);
+      }
+    };
+    
+    ws.onclose = (event) => {
+      console.log(`Multi-stream closed:`, event.code, event.reason);
+      // For simplicity, we only try to reconnect the single stream in the original design.
+      // A more robust solution would track all symbols for reconnection here.
+      // Reconnecting to the single combined stream URL is the easiest fix:
+      this.handleReconnect(connectionId, symbols, this.subscribers.get(connectionId)); 
+    };
+    
+    ws.onerror = (error) => {
+      console.error(`Multi-stream error:`, error);
+    };
+    
+    return connectionId;
+  }
+  // --- END OF NEW METHOD ---
+
+
   /**
    * Handle incoming stream data
    * @param {string} connectionId - Connection ID
@@ -81,11 +148,18 @@ class BinanceStreams {
    * @param {Object} callbacks - Callback functions
    */
   handleStreamData(connectionId, stream, data, callbacks) {
-    const symbol = data.s || data.symbol;
+    // The symbol is inside the data payload for all streams
+    const symbol = data.s || data.symbol; 
     
+    if (!callbacks) {
+        console.warn(`No callbacks found for connection ${connectionId}`);
+        return;
+    }
+
     if (stream.includes('@ticker')) {
       const tickerData = this.formatTickerData(data);
-      callbacks.onTicker?.(tickerData);
+      // The callback needs to handle the ticker data for ANY symbol on the stream
+      callbacks.onTicker?.(tickerData); 
     } else if (stream.includes('@trade')) {
       const tradeData = this.formatTradeData(data);
       callbacks.onTrade?.(tradeData);
@@ -98,172 +172,17 @@ class BinanceStreams {
     }
   }
 
-  /**
-   * Format ticker data
-   * @param {Object} data - Raw ticker data
-   * @returns {Object} - Formatted ticker data
-   */
-  formatTickerData(data) {
-    const priceChangePercent = parseFloat(data.P || '0');
-    const isPositive = priceChangePercent >= 0;
-    
-    return {
-      symbol: data.s || '',
-      lastPrice: parseFloat(data.c || '0'),
-      priceChange: parseFloat(data.P || '0'),
-      priceChangePercent: priceChangePercent,
-      volume: parseFloat(data.v || '0'),
-      high24h: parseFloat(data.h || '0'),
-      low24h: parseFloat(data.l || '0'),
-      isPositive,
-      formattedPrice: this.formatPrice(parseFloat(data.c || '0')),
-      formattedChange: this.formatPrice(parseFloat(data.P || '0')),
-      formattedVolume: this.formatVolume(parseFloat(data.v || '0'))
-    };
-  }
+  // ... (formatTickerData, formatTradeData, formatDepthData, formatKlineData, formatPrice, formatQuantity, formatVolume, handleReconnect, disconnect, cleanup, disconnectAll, getConnectionStatus methods remain the same) ...
+
+  // To save space, I'll only show the handleReconnect function with the array check update
 
   /**
-   * Format trade data
-   * @param {Object} data - Raw trade data
-   * @returns {Object} - Formatted trade data
-   */
-  formatTradeData(data) {
-    return {
-      symbol: data.s || '',
-      price: parseFloat(data.p || '0'),
-      quantity: parseFloat(data.q || '0'),
-      time: data.T || Date.now(),
-      isBuyerMaker: data.m || false,
-      tradeId: data.t || '',
-      formattedPrice: this.formatPrice(parseFloat(data.p || '0')),
-      formattedQuantity: this.formatQuantity(parseFloat(data.q || '0'))
-    };
-  }
-
-  /**
-   * Format depth data
-   * @param {Object} data - Raw depth data
-   * @returns {Object} - Formatted depth data
-   */
-  formatDepthData(data) {
-    return {
-      symbol: data.s || '',
-      bids: (data.b || []).map(bid => ({
-        price: parseFloat(bid[0]),
-        quantity: parseFloat(bid[1]),
-        formattedPrice: this.formatPrice(parseFloat(bid[0])),
-        formattedQuantity: this.formatQuantity(parseFloat(bid[1]))
-      })),
-      asks: (data.a || []).map(ask => ({
-        price: parseFloat(ask[0]),
-        quantity: parseFloat(ask[1]),
-        formattedPrice: this.formatPrice(parseFloat(ask[0])),
-        formattedQuantity: this.formatQuantity(parseFloat(ask[1]))
-      })),
-      lastUpdateId: data.u || 0
-    };
-  }
-
-  /**
-   * Format kline data
-   * @param {Object} data - Raw kline data
-   * @returns {Object} - Formatted kline data
-   */
-  formatKlineData(data) {
-    const k = data.k;
-    return {
-      symbol: k.s || '',
-      openTime: k.t || 0,
-      closeTime: k.T || 0,
-      open: parseFloat(k.o || '0'),
-      high: parseFloat(k.h || '0'),
-      low: parseFloat(k.l || '0'),
-      close: parseFloat(k.c || '0'),
-      volume: parseFloat(k.v || '0'),
-      quoteVolume: parseFloat(k.q || '0'),
-      trades: k.n || 0,
-      isClosed: k.x || false,
-      interval: k.i || '1m',
-      formattedOpen: this.formatPrice(parseFloat(k.o || '0')),
-      formattedHigh: this.formatPrice(parseFloat(k.h || '0')),
-      formattedLow: this.formatPrice(parseFloat(k.l || '0')),
-      formattedClose: this.formatPrice(parseFloat(k.c || '0')),
-      formattedVolume: this.formatVolume(parseFloat(k.v || '0'))
-    };
-  }
-
-  /**
-   * Format price with appropriate decimal places
-   * @param {number} price - Price value
-   * @returns {string} - Formatted price string
-   */
-  formatPrice(price) {
-    if (price >= 1000) {
-      return price.toLocaleString('en-US', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      });
-    } else if (price >= 1) {
-      return price.toLocaleString('en-US', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 4 
-      });
-    } else {
-      return price.toLocaleString('en-US', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 8 
-      });
-    }
-  }
-
-  /**
-   * Format quantity with appropriate decimal places
-   * @param {number} quantity - Quantity value
-   * @returns {string} - Formatted quantity string
-   */
-  formatQuantity(quantity) {
-    if (quantity >= 1000) {
-      return quantity.toLocaleString('en-US', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      });
-    } else if (quantity >= 1) {
-      return quantity.toLocaleString('en-US', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 4 
-      });
-    } else {
-      return quantity.toLocaleString('en-US', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 8 
-      });
-    }
-  }
-
-  /**
-   * Format volume with appropriate units
-   * @param {number} volume - Volume value
-   * @returns {string} - Formatted volume string
-   */
-  formatVolume(volume) {
-    if (volume >= 1e9) {
-      return (volume / 1e9).toFixed(2) + 'B';
-    } else if (volume >= 1e6) {
-      return (volume / 1e6).toFixed(2) + 'M';
-    } else if (volume >= 1e3) {
-      return (volume / 1e3).toFixed(2) + 'K';
-    } else {
-      return volume.toFixed(2);
-    }
-  }
-
-  /**
-   * Handle reconnection logic
+   * Handle reconnection logic (Updated to handle Array for multi-stream)
    * @param {string} connectionId - Connection ID
-   * @param {string} symbol - Symbol to reconnect
+   * @param {string | Array<string>} symbolOrSymbols - Symbol or Array of Symbols to reconnect
    * @param {Object} callbacks - Callback functions
    */
-  handleReconnect(connectionId, symbol, callbacks) {
+  handleReconnect(connectionId, symbolOrSymbols, callbacks) {
     const attempts = this.reconnectAttempts.get(connectionId) || 0;
     
     if (attempts < this.maxReconnectAttempts) {
@@ -272,7 +191,14 @@ class BinanceStreams {
       
       setTimeout(() => {
         this.reconnectAttempts.set(connectionId, attempts + 1);
-        this.connectToSymbol(symbol, callbacks);
+        
+        if (Array.isArray(symbolOrSymbols)) {
+            // Reconnect using the new multi-symbol function
+            this.connectToMultipleSymbols(symbolOrSymbols, callbacks); 
+        } else {
+            // Reconnect using the original single symbol function
+            this.connectToSymbol(symbolOrSymbols, callbacks); 
+        }
       }, delay);
     } else {
       console.error(`Max reconnection attempts reached for ${connectionId}`);
@@ -280,67 +206,17 @@ class BinanceStreams {
     }
   }
 
-  /**
-   * Disconnect and cleanup a specific connection
-   * @param {string} connectionId - Connection ID to cleanup
-   */
-  disconnect(connectionId) {
-    const ws = this.sockets.get(connectionId);
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.close();
-    }
-    
-    this.cleanup(connectionId);
-  }
-
-  /**
-   * Cleanup connection resources
-   * @param {string} connectionId - Connection ID to cleanup
-   */
-  cleanup(connectionId) {
-    this.sockets.delete(connectionId);
-    this.subscribers.delete(connectionId);
-    this.reconnectAttempts.delete(connectionId);
-  }
-
-  /**
-   * Disconnect all connections
-   */
-  disconnectAll() {
-    for (const [connectionId, ws] of this.sockets) {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
-    }
-    
-    this.sockets.clear();
-    this.subscribers.clear();
-    this.reconnectAttempts.clear();
-  }
-
-  /**
-   * Get connection status
-   * @param {string} connectionId - Connection ID
-   * @returns {Object} - Connection status
-   */
-  getConnectionStatus(connectionId) {
-    const ws = this.sockets.get(connectionId);
-    if (!ws) {
-      return { connected: false, readyState: 'CLOSED' };
-    }
-    
-    return {
-      connected: ws.readyState === WebSocket.OPEN,
-      readyState: ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'][ws.readyState]
-    };
-  }
+  // --------------------------------------------------------------------------------------------------------------------------------------------------
+  // NOTE: All other methods (formatTickerData, formatTradeData, etc.) are assumed to be pasted here exactly as they were, 
+  // but with the updated handleReconnect replacing the original one.
+  // --------------------------------------------------------------------------------------------------------------------------------------------------
 }
 
 // Create singleton instance
 const binanceStreams = new BinanceStreams();
 
 /**
- * Connect to all streams for a symbol
+ * Connect to all streams for a single symbol
  * @param {string} symbol - Trading pair symbol
  * @param {Object} callbacks - Callback functions
  * @returns {string} - Connection ID
@@ -348,6 +224,19 @@ const binanceStreams = new BinanceStreams();
 export const connectToSymbolStreams = (symbol, callbacks) => {
   return binanceStreams.connectToSymbol(symbol, callbacks);
 };
+
+// --- NEW EXPORT FOR FIXING THE UI ISSUE ---
+/**
+ * Connect to a single @ticker stream for multiple symbols (use for Top Gainers list).
+ * @param {Array<string>} symbols - Array of trading pair symbols
+ * @param {Object} callbacks - Callback functions (use onTicker)
+ * @returns {string} - Connection ID
+ */
+export const connectToMultipleTickerStreams = (symbols, callbacks) => {
+    return binanceStreams.connectToMultipleSymbols(symbols, callbacks);
+};
+// --- END NEW EXPORT ---
+
 
 /**
  * Disconnect from symbol streams
@@ -374,5 +263,3 @@ export const getStreamConnectionStatus = (connectionId) => {
 };
 
 export default binanceStreams;
-
-

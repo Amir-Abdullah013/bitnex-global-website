@@ -294,3 +294,4 @@ OptimizedMarketTicker.displayName = 'OptimizedMarketTicker';
 export default OptimizedMarketTicker;
 
 
+

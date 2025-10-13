@@ -34,7 +34,7 @@ export const useAdminAuth = () => {
           try {
             const user = JSON.parse(userSession);
             console.log('👤 Found user session:', user);
-            if (user.role === 'admin' || user.role === 'ADMIN') {
+            if (user.role === 'admin' || user.role === 'ADMIN' || user.user_metadata?.role === 'admin') {
               setAdminUser(user);
               setIsAuthenticated(true);
               console.log('✅ Admin authenticated via localStorage');

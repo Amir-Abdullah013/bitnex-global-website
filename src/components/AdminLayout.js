@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import TopNavbar from './TopNavbar';
 import AdminSidebar from './AdminSidebar';
 import { useAdminAuth } from '../lib/admin-auth';
 
@@ -32,9 +31,6 @@ const AdminLayout = ({ children, showSidebar = true, fullWidth = false }) => {
 
   return (
     <div className="min-h-screen bg-binance-background flex flex-col">
-      {/* Top Navbar */}
-      <TopNavbar user={adminUser} onSignOut={handleSignOut} />
-
       <div className="flex flex-1">
         {/* Admin Sidebar (desktop only) */}
         {showSidebar && adminUser && (

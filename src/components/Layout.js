@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import TopNavbar from './TopNavbar';
 import BinanceSidebar from './BinanceSidebar';
 import BnxStatusBar from './BnxStatusBar';
 import { useAuth } from '../lib/auth-context';
@@ -25,9 +24,6 @@ const Layout = ({ children, showSidebar = true, fullWidth = false }) => {
   
   return (
     <div className="min-h-screen bg-binance-background flex flex-col">
-      {/* Top Navbar */}
-      <TopNavbar user={user} onSignOut={handleSignOut} />
-      
       {/* BNX Status Bar - Shows current balances and price */}
       {user && <BnxStatusBar />}
 
